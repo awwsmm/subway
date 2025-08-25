@@ -30,6 +30,9 @@ WORKDIR /usr/src/app
 # Copy the built binary from the previous stage
 COPY --from=builder /usr/src/app/target/release/subway ./
 
+# Now copy the resources
+COPY ./resources ./resources
+
 # Expose the port
 EXPOSE 7878
 

@@ -24,6 +24,8 @@ This command will emit an id like
 
 Visit http://localhost:7878/ in a browser to see the web page.
 
+Visit http://localhost:7878/example (or any other route) to see the 404 page.
+
 Execute the following in a terminal to stop the Docker container from running
 
 ```shell
@@ -39,5 +41,7 @@ cargo run
 ```
 
 and then visit http://localhost:7878/ in a browser to see the web page.
+
+Visit http://localhost:7878/example (or any other route) to see the 404 page.
 
 Press <kbd>control</kbd> + <kbd>C</kbd> in the terminal to shut down the server.
