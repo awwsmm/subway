@@ -10,7 +10,7 @@ async fn hello(res: &mut Response) {
 }
 
 #[handler]
-async fn not_found(&self, _req: &Request, _depot: &Depot, res: &mut Response, ctrl: &mut FlowCtrl) {
+async fn not_found(&self, res: &mut Response, ctrl: &mut FlowCtrl) {
     if StatusCode::NOT_FOUND == res.status_code.unwrap_or(StatusCode::NOT_FOUND) {
         let filename = "resources/404.html";
         let contents = fs::read_to_string(filename).unwrap();
