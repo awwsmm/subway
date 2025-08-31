@@ -34,6 +34,7 @@ COPY --from=builder /usr/src/app/target/release/subway ./
 COPY ./resources ./resources
 
 # Expose the port
+# TODO define this in an env var which is read by this Dockerfile and also by main.rs
 EXPOSE 7878
 
 # Command to run the application

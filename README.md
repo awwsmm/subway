@@ -4,6 +4,8 @@
 
 ### running locally with Docker
 
+Note that building the Docker container requires an Internet connection.
+
 Build the Docker container image by executing the following command in a terminal
 
 ```shell
@@ -33,6 +35,8 @@ docker stop 6496e30285a668b8806f9ba4f7c46cfe75d199529338728850f91b02ab185ca4
 ```
 
 ### running locally with cargo
+
+This method of building the project does not require an Internet connection.
 
 Execute the following command in a terminal
 
