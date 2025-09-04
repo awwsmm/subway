@@ -1,5 +1,4 @@
 use salvo::catcher::Catcher;
-use salvo::oapi::extract::JsonBody;
 use salvo::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
@@ -29,7 +28,7 @@ async fn not_found(&self, res: &mut Response, ctrl: &mut FlowCtrl) {
 
 // TODO move model classes into src/model and add README.md there to explain ubiquitous language
 
-#[derive(Deserialize, ToSchema)]
+#[derive(Deserialize, ToSchema, Extractible)]
 struct PostConstructor {
     title: String,
 }
@@ -44,12 +43,13 @@ struct Post {
 // TODO figure out how to document response codes (2xx, 5xx) in OpenAPI
 
 #[endpoint]
-async fn create_post(res: &mut Response, body: JsonBody<PostConstructor>) {
+async fn create_post(req: &mut Request, res: &mut Response) {
     match File::options().append(true).create(true).open("database.txt") {
         Ok(mut file) => {
 
             let id = Uuid::new_v4();
-            let title = body.title.as_str();
+            let post_constructor: PostConstructor = req.extract().await.unwrap();
+            let title = post_constructor.title.as_str();
 
             let post = Post { id: id.to_string(), title: title.to_string() };
 
@@ -68,7 +68,6 @@ async fn create_post(res: &mut Response, body: JsonBody<PostConstructor>) {
 
 #[endpoint(parameters(("id", description = "Pet id")))]
 async fn get_post(req: &mut Request, res: &mut Response) {
-
     match req.param::<String>("id") {
         Some(id) => {
             match File::options().read(true).write(false).open("database.txt") {
@@ -109,7 +108,6 @@ async fn get_post(req: &mut Request, res: &mut Response) {
         },
         None => res.render(salvo::Error::other("Missing uuid in request"))
     }
-
 }
 
 #[tokio::main]
