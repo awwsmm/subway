@@ -1,0 +1,33 @@
+services:
+  db:
+    image: postgres:17.6
+    container_name: my_postgres_db
+    restart: always
+    environment:
+      POSTGRES_USER: benchmarkdbuser
+      POSTGRES_PASSWORD: benchmarkdbpass
+      POSTGRES_DB: mydatabase
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U benchmarkdbuser -d mydatabase" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  subway:
+    image: subway
+    container_name: my_app
+    environment:
+      DATABASE_URL: postgres://benchmarkdbuser:benchmarkdbpass@db:5432/mydatabase
+    restart: always
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "7878:7878"
+
+volumes:
+  pgdata:

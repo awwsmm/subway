@@ -18,6 +18,9 @@ RUN cargo build --release
 # Now copy the source code
 COPY ./src ./src
 
+# ...and the DB migration code
+COPY ./migrations ./migrations
+
 # Build the application
 RUN cargo build --release
 
