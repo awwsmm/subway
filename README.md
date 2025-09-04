@@ -1,42 +1,10 @@
 # subway
 
-## local development
+## local development without Docker
 
-### running locally with Docker
+### basics
 
-Note that building the Docker container requires an Internet connection.
-
-Build the Docker container image by executing the following command in a terminal
-
-```shell
-docker build -t subway .
-```
-
-Then run the container with
-
-```shell
-docker run -d -p 7878:7878 subway
-```
-
-This command will emit an id like
-
-```
-6496e30285a668b8806f9ba4f7c46cfe75d199529338728850f91b02ab185ca4
-```
-
-Visit http://localhost:7878 in a browser to see the web page.
-
-Visit http://localhost:7878/example (or any other route) to see the 404 page.
-
-Execute the following in a terminal to stop the Docker container from running
-
-```shell
-docker stop 6496e30285a668b8806f9ba4f7c46cfe75d199529338728850f91b02ab185ca4
-```
-
-### running locally with cargo
-
-This method of building the project does not require an Internet connection.
+When running locally with Cargo, all dependencies are in-memory. This allows for fast iteration without worrying about networking, containers, and so on. This method of building the project does not require an Internet connection.
 
 Execute the following command in a terminal
 
@@ -44,12 +12,62 @@ Execute the following command in a terminal
 cargo run
 ```
 
-and then visit http://localhost:7878 in a browser to see the web page.
+and then visit http://localhost:7878/hello in a browser to see a web page.
 
 Visit http://localhost:7878/does-not-exist to see the 404 page.
 
+Visit http://localhost:7878/swagger-ui to see the API documentation.
+
 Press <kbd>control</kbd> + <kbd>C</kbd> in the terminal to shut down the server.
 
-## OpenAPI
+### examples
 
-OpenAPI route documentation is available at the endpoint `/swagger-ui`, e.g. http://localhost:7878/swagger-ui
+Test the database by writing to it and reading from it. Create a `User` with an `id` and a `name` by visiting
+
+http://localhost:7878/user/add/12345/Albert
+
+Retrieve that user by visiting
+
+http://localhost:7878/user/get/12345
+
+Note that, due to the in-memory nature of the database, all records are wiped when the application is shut down. If you want a persistent database, read the section on [local development with Docker](#local-development-with-docker).
+
+## local development with Docker
+
+Note that building the application in this way (with Docker) requires an Internet connection.
+
+Build the Docker container image by executing the following command in a terminal
+
+```shell
+docker build -t subway .
+```
+
+Then, run the application and its dependencies with
+
+```shell
+docker-compose up
+```
+
+Visit http://localhost:7878/hello in a browser to see a web page.
+
+Visit http://localhost:7878/does-not-exist to see the 404 page.
+
+Visit http://localhost:7878/swagger-ui to see the API documentation.
+
+Press <kbd>control</kbd> + <kbd>C</kbd> in the terminal to shut down the container stack.
+
+### examples
+
+Test the database by writing to it and reading from it. Create a `User` with an `id` and a `name` by visiting
+
+http://localhost:7878/user/add/12345/Albert
+
+Retrieve that user by visiting
+
+http://localhost:7878/user/get/12345
+
+Note that records are persisted on your local disk when the application is shut down. If you want to clear the database, run
+
+```shell
+docker-compose down -v
+```

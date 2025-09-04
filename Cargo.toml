@@ -13,3 +13,6 @@ once_cell = "1.21.3"
 pq-sys = { version = "0.7.2", features = ["bundled"] } # required by diesel, even though we do not use it directly
 openssl-sys = { version = "0.9.100", features = ["vendored"] } # required by diesel, even though we do not use it directly
 diesel_migrations = "2.2.0"
+
+[features]
+postgres = []
