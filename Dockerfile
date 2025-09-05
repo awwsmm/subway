@@ -22,7 +22,7 @@ COPY ./src ./src
 COPY ./migrations ./migrations
 
 # Build the application
-RUN cargo build --release --features "docker"
+RUN cargo build --release --features "postgres"
 
 # Start a new stage to create a smaller image without unnecessary build dependencies
 FROM debian:12.11-slim

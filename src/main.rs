@@ -1,6 +1,6 @@
 mod db;
 
-use crate::db::Database;
+use crate::db::{Database, DatabaseLike};
 use salvo::catcher::Catcher;
 use salvo::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -145,9 +145,6 @@ async fn set_db(depot: &mut Depot) {
 
 #[tokio::main]
 async fn main() {
-
-    Database::connect().unwrap();
-
     let acceptor = TcpListener::new("0.0.0.0:7878").bind().await;
 
     // TODO import regex package and enable this
