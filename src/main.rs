@@ -7,13 +7,24 @@ use crate::db::Database;
 use crate::model::post::Post;
 use salvo::catcher::Catcher;
 use salvo::prelude::*;
-use serde::Deserialize;
 use std::fmt::Debug;
 use std::fs;
 use std::str::FromStr;
 use std::sync::LazyLock;
 use tokio::sync::Mutex;
 use uuid::Uuid;
+
+#[cfg(feature = "postgres")]
+use diesel::r2d2::{ConnectionManager, Pool};
+
+#[cfg(feature = "postgres")]
+use diesel::PgConnection;
+
+#[cfg(feature = "postgres")]
+use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
+
+#[cfg(feature = "postgres")]
+use std::sync::Arc;
 
 #[endpoint]
 async fn hello(res: &mut Response) {
@@ -36,27 +47,57 @@ async fn not_found(&self, res: &mut Response, ctrl: &mut FlowCtrl) {
     }
 }
 
-#[derive(Deserialize, ToSchema, Extractible)]
-struct CreatePostRequest {
-    title: String,
-}
-
 // TODO figure out how to document response codes (2xx, 5xx) in OpenAPI
 
+#[cfg(not(feature = "postgres"))]
 static DB: LazyLock<Mutex<Database>> = LazyLock::new(|| Mutex::new(Database { posts_by_id: PostsByIdTable::new() }));
 
+#[cfg(feature = "postgres")]
+static DB: LazyLock<Mutex<Database>> = LazyLock::new(|| {
+
+    let db_url = std::env::var("DATABASE_URL").expect("DATABASE_URL not defined");
+
+    let manager = ConnectionManager::<PgConnection>::new(db_url);
+
+    let n_connections = 10;
+
+    let pool = Pool::builder()
+        .max_size(n_connections)
+        .min_idle(Some(n_connections))
+        .test_on_check_out(false)
+        .idle_timeout(None)
+        .max_lifetime(None)
+        .build(manager);
+
+    match pool {
+        Ok(pool) => {
+            const MIGRATIONS: EmbeddedMigrations = embed_migrations!("migrations");
+
+            match pool.get() {
+                Ok(mut connection) => connection.run_pending_migrations(MIGRATIONS).unwrap(),
+                Err(_) => panic!("Unable to run database migrations!"),
+            };
+
+            let arc_pool = Arc::new(pool);
+            Mutex::new(Database { posts_by_id: PostsByIdTable { connection_pool: arc_pool } })
+        },
+        Err(_) => panic!("Database Pool Creation failed"),
+    }
+});
+
 #[endpoint]
-async fn create_post(depot: &mut Depot, res: &mut Response) {
+async fn create_post(res: &mut Response) {
     let mut lock = DB.lock().await;
     let table = &mut lock.posts_by_id;
 
-    let key = table.insert(Post::new(String::from("default title"))).await;
-
-    res.render(format!("added new Post to table with id: {}\n\ntable: {:?}", key, table))
+    match table.insert(Post::new(String::from("default title"))).await {
+        Ok(key) => res.render(format!("added new Post to table with id: {}\n\ntable: {:?}", key, table)),
+        Err(_) => res.render("error creating Post"),
+    }
 }
 
 #[endpoint]
-async fn get_post(req: &mut Request, depot: &mut Depot, res: &mut Response) {
+async fn get_post(req: &mut Request, res: &mut Response) {
     let lock = DB.lock().await;
     let table = &lock.posts_by_id;
 
@@ -66,8 +107,8 @@ async fn get_post(req: &mut Request, depot: &mut Depot, res: &mut Response) {
         Err(_) => res.render(format!("cannot parse {} as UUID\n", id)),
         Ok(key) => {
             match table.get(&key).await {
-                None => res.render(format!("no known Post with id: {}\n\ntable: {:?}", id, table)),
-                Some(post) => res.render(Json(post)),
+                Err(e) => res.render(format!("error getting Post by id: {}", e)),
+                Ok(post) => res.render(Json(post)),
             }
         }
     }

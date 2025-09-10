@@ -17,6 +17,6 @@ pub(crate) trait Row<PrimaryKey> {
 
 // Table is generic for the same reason.
 pub(crate) trait Table<K, V> where V: Row<K> {
-    async fn insert(&mut self, row: V) -> K;
-    async fn get<'a>(&'a self, key: &K) -> Option<&'a V> where V: 'a;
+    async fn insert(&mut self, row: V) -> Result<K, String>;
+    async fn get(&self, key: &K) -> Result<V, String>;
 }

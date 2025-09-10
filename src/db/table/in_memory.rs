@@ -14,15 +14,18 @@ impl<K, V> InMemoryTable<K, V> where K: Eq + Hash + Clone {
     }
 }
 
-impl<K, V> Table<K, V> for InMemoryTable<K, V> where V: Row<K>, K: Eq + Hash + Clone {
-    async fn insert(&mut self, row: V) -> K {
+impl<K, V> Table<K, V> for InMemoryTable<K, V> where V: Row<K>, K: Eq + Hash + Clone, V: Clone {
+    async fn insert(&mut self, row: V) -> Result<K, String> {
         let key = row.primary_key().clone();
         self.data.insert(row.primary_key().clone(), row);
-        key
+        Ok(key)
     }
 
-    async fn get<'a>(&'a self, key: &K) -> Option<&'a V> where V: 'a{
-        self.data.get(key)
+    async fn get(&self, key: &K) -> Result<V, String> {
+        match self.data.get(key) {
+            None => Err("Key not found".to_string()),
+            Some(value) => Ok(value.clone()),
+        }
     }
 }
 
