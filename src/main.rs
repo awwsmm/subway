@@ -1,13 +1,16 @@
 mod db;
+mod model;
 
 use crate::db::{Database, DatabaseLike};
+use crate::model::post::Post;
 use salvo::catcher::Catcher;
 use salvo::prelude::*;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use std::fmt::Debug;
 use std::fs;
 use std::fs::File;
 use std::io::{Read, Write};
+use std::path::Path;
 use uuid::Uuid;
 
 #[endpoint]
@@ -31,29 +34,21 @@ async fn not_found(&self, res: &mut Response, ctrl: &mut FlowCtrl) {
     }
 }
 
-// TODO move model classes into src/model and add README.md there to explain ubiquitous language
-
 #[derive(Deserialize, ToSchema, Extractible)]
-struct PostConstructor {
-    title: String,
-}
-
-// FIXME make id field a Uuid when Postgres is introduced
-#[derive(Serialize, Deserialize)]
-struct Post {
-    id: String,
+struct CreatePostRequest {
     title: String,
 }
 
 // TODO figure out how to document response codes (2xx, 5xx) in OpenAPI
 
+// example: curl -X POST localhost:7878/post/create -H 'Content-Type: application/json' -d '{"title":"Hello, World!"}'
 #[endpoint]
 async fn create_post(req: &mut Request, res: &mut Response) {
     match File::options().append(true).create(true).open("database.txt") {
         Ok(mut file) => {
 
             let id = Uuid::new_v4();
-            let post_constructor: PostConstructor = req.extract().await.unwrap();
+            let post_constructor: CreatePostRequest = req.parse_json().await.unwrap();
             let title = post_constructor.title.as_str();
 
             let post = Post { id: id.to_string(), title: title.to_string() };
@@ -71,44 +66,48 @@ async fn create_post(req: &mut Request, res: &mut Response) {
     }
 }
 
+// example: curl localhost:7878/post/510d6709-4082-4c07-b79c-96d112cf1281
 #[endpoint(parameters(("id", description = "Pet id")))]
 async fn get_post(req: &mut Request, res: &mut Response) {
     match req.param::<String>("id") {
         Some(id) => {
-            match File::options().read(true).write(false).open("database.txt") {
-                Ok(mut file) => {
+            if !Path::new("database.txt").exists() {
+                res.render(salvo::Error::other("database.txt does not exist"));
+            } else {
+                match File::options().read(true).write(false).open("database.txt") {
+                    Ok(mut file) => {
+                        let mut str = String::new();
+                        let mut maybe_post: Option<Post> = None;
 
-                    let mut str = String::new();
-                    let mut maybe_post: Option<Post> = None;
+                        match file.read_to_string(&mut str) {
+                            Ok(_) => {
+                                let lines = str.split("\n").collect::<Vec<&str>>();
+                                for line in lines {
+                                    let fields = line.split(",").collect::<Vec<&str>>();
 
-                    match file.read_to_string(&mut str) {
-                        Ok(_) => {
-                            let lines = str.split("\n").collect::<Vec<&str>>();
-                            for line in lines {
-                                let fields = line.split(",").collect::<Vec<&str>>();
-
-                                if id == fields[0] {
-                                    match Uuid::parse_str(fields[0]) {
-                                        Ok(uuid) => {
-                                            let id = uuid;
-                                            let title = fields[1].to_string();
-                                            maybe_post = Some(Post { id: id.to_string(), title: title.clone() });
-                                            break;
-                                        },
-                                        Err(e) => res.render(salvo::Error::other(format!("Error parsing uuid: {}", e))),
+                                    if id == fields[0] {
+                                        match Uuid::parse_str(fields[0]) {
+                                            Ok(uuid) => {
+                                                let id = uuid;
+                                                let title = fields[1].to_string();
+                                                maybe_post = Some(Post { id: id.to_string(), title: title.clone() });
+                                                break;
+                                            },
+                                            Err(e) => res.render(salvo::Error::other(format!("Error parsing uuid: {}", e))),
+                                        }
                                     }
                                 }
-                            }
 
-                            match maybe_post {
-                                Some(post) => res.render(Json(post)),
-                                None => res.render(salvo::Error::other(format!("Unknown uuid: {}", id))),
-                            }
-                        },
-                        Err(e) => res.render(salvo::Error::other(format!("Error reading database.txt: {}", e))),
+                                match maybe_post {
+                                    Some(post) => res.render(Json(post)),
+                                    None => res.render(salvo::Error::other(format!("Unknown uuid: {}", id))),
+                                }
+                            },
+                            Err(e) => res.render(salvo::Error::other(format!("Error reading database.txt: {}", e))),
+                        }
                     }
+                    Err(e) => res.render(salvo::Error::other(format!("Error opening database.txt: {}", e))),
                 }
-                Err(e) => res.render(salvo::Error::other(format!("Error opening database.txt: {}", e))),
             }
         },
         None => res.render(salvo::Error::other("Missing uuid in request"))
