@@ -1,8 +1,28 @@
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
-// FIXME make id field a Uuid when Postgres is introduced
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub(crate) struct Post {
-    pub(crate) id: String,
-    pub(crate) title: String,
+    id: Uuid,
+    title: String,
+}
+
+// We add a new() function to avoid
+//  - exposing the 'id' field to mutation
+//  - users creating 'title's of unbounded length
+impl Post {
+    pub(crate) fn new(title: String) -> Self {
+
+        // TODO add title validation
+
+        Self {
+            id: Uuid::new_v4(),
+            title,
+        }
+
+    }
+
+    pub(crate) fn id(&self) -> &Uuid {
+        &self.id
+    }
 }
