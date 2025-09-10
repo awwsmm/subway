@@ -1,6 +1,6 @@
 #[cfg(feature = "postgres")]
 use diesel::{table, Insertable, Queryable, Selectable};
-
+use diesel::Identifiable;
 use serde::Serialize;
 
 #[cfg(feature = "postgres")]
@@ -8,7 +8,7 @@ mod postgres;
 
 #[cfg(feature = "postgres")]
 table! {
-    users(id) {
+    users {
         id -> Integer,
         name -> Text,
     }
@@ -18,8 +18,8 @@ table! {
 mod in_memory;
 
 #[derive(Serialize)]
-#[cfg_attr(feature = "postgres", derive(Queryable, Selectable, Insertable))]
-#[cfg_attr(feature = "postgres", diesel(table_name = users))]
+#[cfg_attr(feature = "postgres", derive(Queryable, Selectable, Insertable, Identifiable))]
+#[cfg_attr(feature = "postgres", diesel(table_name = users, primary_key(id)))]
 #[cfg_attr(not(feature = "postgres"), derive(Clone))]
 pub(crate) struct User {
     id: i32,
