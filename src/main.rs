@@ -50,7 +50,7 @@ async fn not_found(&self, res: &mut Response, ctrl: &mut FlowCtrl) {
 // TODO figure out how to document response codes (2xx, 5xx) in OpenAPI
 
 #[cfg(not(feature = "postgres"))]
-static DB: LazyLock<Mutex<Database>> = LazyLock::new(|| Mutex::new(Database { posts_by_id: PostsByIdTable::new() }));
+static DB: LazyLock<Mutex<Database>> = LazyLock::new(|| Mutex::new(Database { posts_by_id: Box::new(PostsByIdTable::new()) }));
 
 #[cfg(feature = "postgres")]
 static DB: LazyLock<Mutex<Database>> = LazyLock::new(|| {
@@ -79,7 +79,7 @@ static DB: LazyLock<Mutex<Database>> = LazyLock::new(|| {
             };
 
             let arc_pool = Arc::new(pool);
-            Mutex::new(Database { posts_by_id: PostsByIdTable { connection_pool: arc_pool } })
+            Mutex::new(Database { posts_by_id: Box::new(PostsByIdTable { connection_pool: arc_pool }) })
         },
         Err(_) => panic!("Database Pool Creation failed"),
     }

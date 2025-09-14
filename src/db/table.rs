@@ -1,3 +1,5 @@
+use std::fmt::Debug;
+
 #[cfg(not(feature = "postgres"))]
 pub(crate) mod in_memory;
 
@@ -16,7 +18,7 @@ pub(crate) trait Row<PrimaryKey> {
 }
 
 // Table is generic for the same reason.
-pub(crate) trait Table<K, V> where V: Row<K> {
+pub(crate) trait Table<K, V>: Debug where V: Row<K> {
     fn insert(&mut self, row: V) -> Result<K, String>;
     fn get(&self, key: &K) -> Result<V, String>;
 }

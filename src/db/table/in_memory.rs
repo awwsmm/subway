@@ -14,7 +14,7 @@ impl<K, V> InMemoryTable<K, V> where K: Eq + Hash + Clone {
     }
 }
 
-impl<K, V> Table<K, V> for InMemoryTable<K, V> where V: Row<K>, K: Eq + Hash + Clone, V: Clone {
+impl<K, V> Table<K, V> for InMemoryTable<K, V> where V: Row<K> + Clone + Debug, K: Eq + Hash + Clone + Debug {
     fn insert(&mut self, row: V) -> Result<K, String> {
         let key = row.primary_key().clone();
         self.data.insert(row.primary_key().clone(), row);
