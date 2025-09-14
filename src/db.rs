@@ -1,11 +1,16 @@
-use crate::db::tables::posts_by_id::{InMemoryPostsByIdTable, PostgresPostsByIdTable, PostsByIdTableLike};
+use crate::db::tables::in_memory;
+use crate::db::tables::postgres::posts_by_id::PostgresPostsByIdTable;
+use crate::db::tables::posts_by_id::PostsByIdTableLike;
 use diesel::r2d2::{ConnectionManager, Pool};
 use diesel::PgConnection;
 use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
 use std::sync::Arc;
 
-pub(crate) mod tables;
+// defines what a 'Table' is
 pub(crate) mod table;
+
+// gives a list of Tables
+pub(crate) mod tables;
 
 pub(crate) struct Database {
     pub(crate) posts_by_id: Box<dyn PostsByIdTableLike>,
@@ -43,7 +48,7 @@ impl Database {
                 Err(_) => panic!("Database Pool Creation failed"),
             }
         } else {
-            Database { posts_by_id: Box::new(InMemoryPostsByIdTable::new()) }
+            Database { posts_by_id: Box::new(in_memory::posts_by_id::InMemoryPostsByIdTable::new()) }
         }
     }
 }
