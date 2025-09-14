@@ -90,7 +90,7 @@ async fn create_post(res: &mut Response) {
     let mut lock = DB.lock().await;
     let table = &mut lock.posts_by_id;
 
-    match table.insert(Post::new(String::from("default title"))).await {
+    match table.insert(Post::new(String::from("default title"))) {
         Ok(key) => res.render(format!("added new Post to table with id: {}\n\ntable: {:?}", key, table)),
         Err(_) => res.render("error creating Post"),
     }
@@ -106,7 +106,7 @@ async fn get_post(req: &mut Request, res: &mut Response) {
     match Uuid::from_str(&id) {
         Err(_) => res.render(format!("cannot parse {} as UUID\n", id)),
         Ok(key) => {
-            match table.get(&key).await {
+            match table.get(&key) {
                 Err(e) => res.render(format!("error getting Post by id: {}", e)),
                 Ok(post) => res.render(Json(post)),
             }

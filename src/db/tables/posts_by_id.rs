@@ -45,12 +45,12 @@ impl PostsByIdTable {
 
 #[cfg(not(feature = "postgres"))]
 impl Table<Uuid, Post> for PostsByIdTable {
-    async fn insert(&mut self, row: Post) -> Result<Uuid, String> {
-        self.delegate.insert(row).await
+    fn insert(&mut self, row: Post) -> Result<Uuid, String> {
+        self.delegate.insert(row)
     }
 
-    async fn get(&self, key: &Uuid) -> Result<Post, String> {
-        self.delegate.get(key).await
+    fn get(&self, key: &Uuid) -> Result<Post, String> {
+        self.delegate.get(key)
     }
 }
 
@@ -62,13 +62,13 @@ pub(crate) struct PostsByIdTable {
 
 #[cfg(feature = "postgres")]
 impl Table<Uuid, Post> for PostsByIdTable {
-    async fn insert(&mut self, row: Post) -> Result<Uuid, String> {
+    fn insert(&mut self, row: Post) -> Result<Uuid, String> {
         match self.connection_pool.get() {
             Ok(mut connection) => {
                 let key = row.primary_key().clone();
                 match insert_into(posts_by_id::table).values(row).execute(&mut connection) {
                     Ok(_) => {
-                        match self.get(&key).await {
+                        match self.get(&key) {
                             Err(e) => Err(format!("Unable writing to DB: {}", e)),
                             Ok(post) => Ok(post.primary_key().clone()),
                         }
@@ -80,7 +80,7 @@ impl Table<Uuid, Post> for PostsByIdTable {
         }
     }
 
-    async fn get(&self, key: &Uuid) -> Result<Post, String> {
+    fn get(&self, key: &Uuid) -> Result<Post, String> {
         match self.connection_pool.get() {
             Ok(mut connection) => {
                 match posts_by_id::table.find(key).first::<Post>(&mut connection) {
