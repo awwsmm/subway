@@ -1,5 +1,5 @@
 use crate::db::postgres::posts_by_id::posts_by_id;
-use crate::db::table::Row;
+use crate::db::table::TableRow;
 use crate::model::post::Post;
 use diesel::{Insertable, Queryable};
 use serde::Serialize;
@@ -13,7 +13,7 @@ pub(crate) struct PostsByIdTableRow {
     title: String,
 }
 
-impl Row<Uuid> for PostsByIdTableRow {
+impl TableRow<Uuid> for PostsByIdTableRow {
     fn primary_key(&self) -> &Uuid {
         &self.id
     }
@@ -28,7 +28,7 @@ impl From<Post> for PostsByIdTableRow {
     }
 }
 
-pub(crate) trait PostsByIdTableLike: Sync + Send + Debug {
+pub(crate) trait PostsByIdTableLike: Sync + Send {
     fn insert(&mut self, row: PostsByIdTableRow) -> Result<Uuid, String>;
     fn get(&self, key: &Uuid) -> Result<PostsByIdTableRow, String>;
 }

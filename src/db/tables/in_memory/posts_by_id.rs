@@ -1,10 +1,8 @@
 use crate::db::table::in_memory::InMemoryTable;
 use crate::db::table::Table;
 use crate::db::tables::posts_by_id::{PostsByIdTableLike, PostsByIdTableRow};
-use std::fmt::Debug;
 use uuid::Uuid;
 
-#[derive(Debug)]
 pub(crate) struct Impl {
     delegate: InMemoryTable<Uuid, PostsByIdTableRow>,
 }

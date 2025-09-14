@@ -1,36 +1,35 @@
-use crate::db::table::{Row, Table};
+use crate::db::table::{TableRow, Table};
 use std::collections::HashMap;
-use std::fmt::{Debug, Formatter};
 use std::hash::Hash;
 
-pub(crate) struct InMemoryTable<K, V> where K: Eq + Hash + Clone {
-    data: HashMap<K, V>,
+pub(crate) struct InMemoryTable<PrimaryKey, Row> {
+    data: HashMap<PrimaryKey, Row>,
 }
 
 // We add a new() function to avoid making 'data' public
-impl<K, V> InMemoryTable<K, V> where K: Eq + Hash + Clone {
+impl<PrimaryKey, Row> InMemoryTable<PrimaryKey, Row> {
     pub(crate) fn new() -> Self {
         Self { data: HashMap::new() }
     }
 }
 
-impl<K, V> Table<K, V> for InMemoryTable<K, V> where V: Row<K> + Clone + Debug, K: Eq + Hash + Clone + Debug {
-    fn insert(&mut self, row: V) -> Result<K, String> {
+impl<PrimaryKey, Row> Table<PrimaryKey, Row> for InMemoryTable<PrimaryKey, Row>
+where
+    PrimaryKey: Eq + Hash, // required by HashMap
+    PrimaryKey: Clone, // required for insert() to take ownership of K
+    Row: TableRow<PrimaryKey>,
+    Row: Clone, // required to turn &V into V after calling .get()
+{
+    fn insert(&mut self, row: Row) -> Result<PrimaryKey, String> {
         let key = row.primary_key().clone();
         self.data.insert(row.primary_key().clone(), row);
         Ok(key)
     }
 
-    fn get(&self, key: &K) -> Result<V, String> {
+    fn get(&self, key: &PrimaryKey) -> Result<Row, String> {
         match self.data.get(key) {
             None => Err("Key not found".to_string()),
             Some(value) => Ok(value.clone()),
         }
-    }
-}
-
-impl<K, V> Debug for InMemoryTable<K, V> where V: Row<K>, K: Eq + Hash + Clone + Debug, V: Debug {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        f.debug_set().entries(self.data.iter()).finish()
     }
 }

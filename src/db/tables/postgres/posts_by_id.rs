@@ -1,4 +1,4 @@
-use crate::db::table::Row;
+use crate::db::table::TableRow;
 use crate::db::tables::posts_by_id::{PostsByIdTableLike, PostsByIdTableRow};
 use diesel::dsl::insert_into;
 use diesel::r2d2::{ConnectionManager, Pool};
@@ -20,8 +20,11 @@ pub(crate) struct Impl {
     pub(crate) connection_pool: Arc<Pool<ConnectionManager<PgConnection>>>,
 }
 
+// TODO pull this into a default db::table::postgres implementation
+
 impl PostsByIdTableLike for Impl {
     fn insert(&mut self, row: PostsByIdTableRow) -> Result<Uuid, String> {
+
         match self.connection_pool.get() {
             Ok(mut connection) => {
                 let key = row.primary_key().clone();

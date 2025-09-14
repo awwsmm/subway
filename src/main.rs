@@ -45,7 +45,7 @@ async fn create_post(res: &mut Response) {
     let table = &mut lock.posts_by_id;
 
     match table.insert(Post::new(String::from("default title")).into()) {
-        Ok(key) => res.render(format!("added new Post to table with id: {}\n\ntable: {:?}", key, table)),
+        Ok(key) => res.render(format!("added new Post to table with id: {}", key)),
         Err(_) => res.render("error creating Post"),
     }
 }
