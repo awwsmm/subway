@@ -72,10 +72,6 @@ async fn get_post(req: &mut Request, res: &mut Response) {
 async fn main() {
     let acceptor = TcpListener::new("0.0.0.0:7878").bind().await;
 
-    // POSTS_BY_ID_TABLE
-    //     .set(Mutex::new(PostsByIdTable::new()))
-    //     .expect("Could not create PostsByIdTable");
-
     // TODO import regex package and enable this
     // PathFilter::register_wisp_regex(
     //     "guid",

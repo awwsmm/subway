@@ -20,7 +20,7 @@ pub(crate) struct Impl {
     pub(crate) connection_pool: Arc<Pool<ConnectionManager<PgConnection>>>,
 }
 
-// TODO pull this into a default db::table::postgres implementation
+// TODO pull this implementation out into a default trait
 
 impl PostsByIdTableLike for Impl {
     fn insert(&mut self, row: PostsByIdTableRow) -> Result<Uuid, String> {

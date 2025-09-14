@@ -22,13 +22,29 @@ Press <kbd>control</kbd> + <kbd>C</kbd> in the terminal to shut down the server.
 
 ### examples
 
-Test the database by writing to it and reading from it. Create a `User` with an `id` and a `name` by visiting
+Test the database by writing to it and reading from it. Create a `Post` with a random `id` and default `title` by executing
 
-http://localhost:7878/user/add/12345/Albert
+```shell
+curl -X POST $SUBWAY/post/create
+```
 
-Retrieve that user by visiting
+That will print output like
 
-http://localhost:7878/user/get/12345
+```
+added new Post to table with id: bd130f53-484a-4aed-a268-847cfca662cd
+```
+
+Retrieve that Post by executing
+
+```shell
+curl $SUBWAY/post/get/bd130f53-484a-4aed-a268-847cfca662cd
+```
+
+which will give output like
+
+```
+{"id":"bd130f53-484a-4aed-a268-847cfca662cd","title":"default title"}
+```
 
 Note that, due to the in-memory nature of the database, all records are wiped when the application is shut down. If you want a persistent database, read the section on [local development with Docker](#local-development-with-docker).
 
@@ -58,13 +74,29 @@ Press <kbd>control</kbd> + <kbd>C</kbd> in the terminal to shut down the contain
 
 ### examples
 
-Test the database by writing to it and reading from it. Create a `User` with an `id` and a `name` by visiting
+Test the database by writing to it and reading from it. Create a `Post` with a random `id` and default `title` by executing
 
-http://localhost:7878/user/add/12345/Albert
+```shell
+curl -X POST $SUBWAY/post/create
+```
 
-Retrieve that user by visiting
+That will print output like
 
-http://localhost:7878/user/get/12345
+```
+added new Post to table with id: bd130f53-484a-4aed-a268-847cfca662cd
+```
+
+Retrieve that Post by executing
+
+```shell
+curl $SUBWAY/post/get/bd130f53-484a-4aed-a268-847cfca662cd
+```
+
+which will give output like
+
+```
+{"id":"bd130f53-484a-4aed-a268-847cfca662cd","title":"default title"}
+```
 
 Note that records are persisted on your local disk when the application is shut down. If you want to clear the database, run
 

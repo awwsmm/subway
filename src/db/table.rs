@@ -1,9 +1,6 @@
 // provides a default in_memory Table implementation
 pub(crate) mod in_memory;
 
-// TODO
-pub(crate) mod postgres;
-
 // Row is generic (as opposed to containing an associated type) because we might implement Row
 // multiple times for the same type. For example...
 //
