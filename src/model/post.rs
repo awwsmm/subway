@@ -1,13 +1,10 @@
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-#[cfg(feature = "postgres")]
 use diesel::{Insertable, Queryable};
 
-#[cfg(feature = "postgres")]
 use diesel::table;
 
-#[cfg(feature = "postgres")]
 table! {
     posts_by_id {
         id -> Uuid,
@@ -16,7 +13,8 @@ table! {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
-#[cfg_attr(feature = "postgres", derive(Insertable, Queryable), diesel(table_name = posts_by_id))]
+#[derive(Insertable, Queryable)]
+#[diesel(table_name = posts_by_id)]
 pub(crate) struct Post {
     id: Uuid,
     title: String,

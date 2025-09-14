@@ -1,9 +1,6 @@
 use std::fmt::Debug;
 
-#[cfg(not(feature = "postgres"))]
 pub(crate) mod in_memory;
-
-#[cfg(feature = "postgres")]
 pub(crate) mod postgres;
 
 // Row is generic (as opposed to containing an associated type) because we might implement Row

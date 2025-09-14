@@ -1,27 +1,14 @@
-use crate::db::table::{Row, Table};
-use crate::model::post::Post;
-use uuid::Uuid;
-
-#[cfg(feature = "postgres")]
-use crate::model::post::posts_by_id;
-
-#[cfg(not(feature = "postgres"))]
 use crate::db::table::in_memory::InMemoryTable;
-
-#[cfg(feature = "postgres")]
+use crate::db::table::{Row, Table};
+use crate::model::post::posts_by_id;
+use crate::model::post::Post;
 use diesel::dsl::insert_into;
-
-#[cfg(feature = "postgres")]
 use diesel::r2d2::{ConnectionManager, Pool};
-
-#[cfg(feature = "postgres")]
 use diesel::QueryDsl;
-
-#[cfg(feature = "postgres")]
 use diesel::{PgConnection, RunQueryDsl};
-
-#[cfg(feature = "postgres")]
+use std::fmt::Debug;
 use std::sync::Arc;
+use uuid::Uuid;
 
 impl Row<Uuid> for Post {
     fn primary_key(&self) -> &Uuid {
@@ -29,39 +16,17 @@ impl Row<Uuid> for Post {
     }
 }
 
-#[cfg(not(feature = "postgres"))]
+pub(crate) trait PostsByIdTableLike: Sync + Send + Debug {
+    fn insert(&mut self, row: Post) -> Result<Uuid, String>;
+    fn get(&self, key: &Uuid) -> Result<Post, String>;
+}
+
 #[derive(Debug)]
-pub(crate) struct PostsByIdTable {
-    delegate: InMemoryTable<Uuid, Post>,
-}
-
-// We add a new() function to avoid making 'delegate' public
-#[cfg(not(feature = "postgres"))]
-impl PostsByIdTable {
-    pub(crate) fn new() -> Self {
-        Self { delegate: InMemoryTable::new() }
-    }
-}
-
-#[cfg(not(feature = "postgres"))]
-impl Table<Uuid, Post> for PostsByIdTable {
-    fn insert(&mut self, row: Post) -> Result<Uuid, String> {
-        self.delegate.insert(row)
-    }
-
-    fn get(&self, key: &Uuid) -> Result<Post, String> {
-        self.delegate.get(key)
-    }
-}
-
-#[cfg(feature = "postgres")]
-#[derive(Debug)]
-pub(crate) struct PostsByIdTable {
+pub(crate) struct PostgresPostsByIdTable {
     pub(crate) connection_pool: Arc<Pool<ConnectionManager<PgConnection>>>,
 }
 
-#[cfg(feature = "postgres")]
-impl Table<Uuid, Post> for PostsByIdTable {
+impl PostsByIdTableLike for PostgresPostsByIdTable {
     fn insert(&mut self, row: Post) -> Result<Uuid, String> {
         match self.connection_pool.get() {
             Ok(mut connection) => {
@@ -90,5 +55,27 @@ impl Table<Uuid, Post> for PostsByIdTable {
             }
             Err(e) => Err(format!("Unable to connect to DB: {}", e)),
         }
+    }
+}
+
+#[derive(Debug)]
+pub(crate) struct InMemoryPostsByIdTable {
+    delegate: InMemoryTable<Uuid, Post>,
+}
+
+// We add a new() function to avoid making 'delegate' public
+impl InMemoryPostsByIdTable {
+    pub(crate) fn new() -> Self {
+        Self { delegate: InMemoryTable::new() }
+    }
+}
+
+impl PostsByIdTableLike for InMemoryPostsByIdTable {
+    fn insert(&mut self, row: Post) -> Result<Uuid, String> {
+        self.delegate.insert(row)
+    }
+
+    fn get(&self, key: &Uuid) -> Result<Post, String> {
+        self.delegate.get(key)
     }
 }

@@ -1,10 +1,9 @@
 mod db;
 mod model;
 
-use crate::db::table::Table;
-use crate::db::tables::posts_by_id::PostsByIdTable;
 use crate::db::Database;
 use crate::model::post::Post;
+use diesel_migrations::MigrationHarness;
 use salvo::catcher::Catcher;
 use salvo::prelude::*;
 use std::fmt::Debug;
@@ -13,18 +12,6 @@ use std::str::FromStr;
 use std::sync::LazyLock;
 use tokio::sync::Mutex;
 use uuid::Uuid;
-
-#[cfg(feature = "postgres")]
-use diesel::r2d2::{ConnectionManager, Pool};
-
-#[cfg(feature = "postgres")]
-use diesel::PgConnection;
-
-#[cfg(feature = "postgres")]
-use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
-
-#[cfg(feature = "postgres")]
-use std::sync::Arc;
 
 #[endpoint]
 async fn hello(res: &mut Response) {
@@ -49,41 +36,8 @@ async fn not_found(&self, res: &mut Response, ctrl: &mut FlowCtrl) {
 
 // TODO figure out how to document response codes (2xx, 5xx) in OpenAPI
 
-#[cfg(not(feature = "postgres"))]
-static DB: LazyLock<Mutex<Database>> = LazyLock::new(|| Mutex::new(Database { posts_by_id: Box::new(PostsByIdTable::new()) }));
+static DB: LazyLock<Mutex<Database>> = LazyLock::new(|| Mutex::new(Database::new()));
 
-#[cfg(feature = "postgres")]
-static DB: LazyLock<Mutex<Database>> = LazyLock::new(|| {
-
-    let db_url = std::env::var("DATABASE_URL").expect("DATABASE_URL not defined");
-
-    let manager = ConnectionManager::<PgConnection>::new(db_url);
-
-    let n_connections = 10;
-
-    let pool = Pool::builder()
-        .max_size(n_connections)
-        .min_idle(Some(n_connections))
-        .test_on_check_out(false)
-        .idle_timeout(None)
-        .max_lifetime(None)
-        .build(manager);
-
-    match pool {
-        Ok(pool) => {
-            const MIGRATIONS: EmbeddedMigrations = embed_migrations!("migrations");
-
-            match pool.get() {
-                Ok(mut connection) => connection.run_pending_migrations(MIGRATIONS).unwrap(),
-                Err(_) => panic!("Unable to run database migrations!"),
-            };
-
-            let arc_pool = Arc::new(pool);
-            Mutex::new(Database { posts_by_id: Box::new(PostsByIdTable { connection_pool: arc_pool }) })
-        },
-        Err(_) => panic!("Database Pool Creation failed"),
-    }
-});
 
 #[endpoint]
 async fn create_post(res: &mut Response) {
