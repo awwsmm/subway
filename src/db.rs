@@ -1,6 +1,5 @@
-use crate::db::tables::in_memory;
-use crate::db::tables::postgres::posts_by_id::PostgresPostsByIdTable;
 use crate::db::tables::posts_by_id::PostsByIdTableLike;
+use crate::db::tables::{in_memory, postgres};
 use diesel::r2d2::{ConnectionManager, Pool};
 use diesel::PgConnection;
 use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
@@ -12,6 +11,7 @@ pub(crate) mod table;
 // gives a list of Tables
 pub(crate) mod tables;
 
+// list the Tables we want to use here
 pub(crate) struct Database {
     pub(crate) posts_by_id: Box<dyn PostsByIdTableLike>,
 }
@@ -20,9 +20,7 @@ impl Database {
     pub(crate) fn new() -> Self {
         if cfg!(feature = "postgres") {
             let db_url = std::env::var("DATABASE_URL").expect("DATABASE_URL not defined");
-
             let manager = ConnectionManager::<PgConnection>::new(db_url);
-
             let n_connections = 10;
 
             let pool = Pool::builder()
@@ -34,6 +32,7 @@ impl Database {
                 .build(manager);
 
             match pool {
+                Err(_) => panic!("Database Pool Creation failed"),
                 Ok(pool) => {
                     const MIGRATIONS: EmbeddedMigrations = embed_migrations!("migrations");
 
@@ -43,12 +42,17 @@ impl Database {
                     };
 
                     let arc_pool = Arc::new(pool);
-                    Database { posts_by_id: Box::new(PostgresPostsByIdTable { connection_pool: arc_pool }) }
-                },
-                Err(_) => panic!("Database Pool Creation failed"),
+
+                    Database {
+                        posts_by_id: Box::new(postgres::posts_by_id::Impl { connection_pool: arc_pool })
+                    }
+                }
             }
+
         } else {
-            Database { posts_by_id: Box::new(in_memory::posts_by_id::InMemoryPostsByIdTable::new()) }
+            Database {
+                posts_by_id: Box::new(in_memory::posts_by_id::Impl::new())
+            }
         }
     }
 }

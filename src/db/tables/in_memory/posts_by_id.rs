@@ -6,18 +6,18 @@ use std::fmt::Debug;
 use uuid::Uuid;
 
 #[derive(Debug)]
-pub(crate) struct InMemoryPostsByIdTable {
+pub(crate) struct Impl {
     delegate: InMemoryTable<Uuid, Post>,
 }
 
 // We add a new() function to avoid making 'delegate' public
-impl InMemoryPostsByIdTable {
+impl Impl {
     pub(crate) fn new() -> Self {
         Self { delegate: InMemoryTable::new() }
     }
 }
 
-impl PostsByIdTableLike for InMemoryPostsByIdTable {
+impl PostsByIdTableLike for Impl {
     fn insert(&mut self, row: Post) -> Result<Uuid, String> {
         self.delegate.insert(row)
     }

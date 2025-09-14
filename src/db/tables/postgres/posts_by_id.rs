@@ -11,11 +11,11 @@ use std::sync::Arc;
 use uuid::Uuid;
 
 #[derive(Debug)]
-pub(crate) struct PostgresPostsByIdTable {
+pub(crate) struct Impl {
     pub(crate) connection_pool: Arc<Pool<ConnectionManager<PgConnection>>>,
 }
 
-impl PostsByIdTableLike for PostgresPostsByIdTable {
+impl PostsByIdTableLike for Impl {
     fn insert(&mut self, row: Post) -> Result<Uuid, String> {
         match self.connection_pool.get() {
             Ok(mut connection) => {
