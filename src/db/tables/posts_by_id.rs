@@ -1,15 +1,34 @@
+use crate::db::postgres::posts_by_id::posts_by_id;
 use crate::db::table::Row;
 use crate::model::post::Post;
+use diesel::{Insertable, Queryable};
+use serde::Serialize;
 use std::fmt::Debug;
 use uuid::Uuid;
 
-impl Row<Uuid> for Post {
+#[derive(Clone, Debug, Serialize, Insertable, Queryable)]
+#[diesel(table_name = posts_by_id)]
+pub(crate) struct PostsByIdTableRow {
+    id: Uuid,
+    title: String,
+}
+
+impl Row<Uuid> for PostsByIdTableRow {
     fn primary_key(&self) -> &Uuid {
-        self.id()
+        &self.id
+    }
+}
+
+impl From<Post> for PostsByIdTableRow {
+    fn from(value: Post) -> Self {
+        Self {
+            id: value.id,
+            title: value.title,
+        }
     }
 }
 
 pub(crate) trait PostsByIdTableLike: Sync + Send + Debug {
-    fn insert(&mut self, row: Post) -> Result<Uuid, String>;
-    fn get(&self, key: &Uuid) -> Result<Post, String>;
+    fn insert(&mut self, row: PostsByIdTableRow) -> Result<Uuid, String>;
+    fn get(&self, key: &Uuid) -> Result<PostsByIdTableRow, String>;
 }

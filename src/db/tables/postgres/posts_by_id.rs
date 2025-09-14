@@ -1,14 +1,19 @@
 use crate::db::table::Row;
-use crate::db::tables::posts_by_id::PostsByIdTableLike;
-use crate::model::post::posts_by_id;
-use crate::model::post::Post;
+use crate::db::tables::posts_by_id::{PostsByIdTableLike, PostsByIdTableRow};
 use diesel::dsl::insert_into;
 use diesel::r2d2::{ConnectionManager, Pool};
-use diesel::QueryDsl;
+use diesel::{table, QueryDsl};
 use diesel::{PgConnection, RunQueryDsl};
 use std::fmt::Debug;
 use std::sync::Arc;
 use uuid::Uuid;
+
+table! {
+    posts_by_id {
+        id -> Uuid,
+        title -> Text,
+    }
+}
 
 #[derive(Debug)]
 pub(crate) struct Impl {
@@ -16,7 +21,7 @@ pub(crate) struct Impl {
 }
 
 impl PostsByIdTableLike for Impl {
-    fn insert(&mut self, row: Post) -> Result<Uuid, String> {
+    fn insert(&mut self, row: PostsByIdTableRow) -> Result<Uuid, String> {
         match self.connection_pool.get() {
             Ok(mut connection) => {
                 let key = row.primary_key().clone();
@@ -34,10 +39,10 @@ impl PostsByIdTableLike for Impl {
         }
     }
 
-    fn get(&self, key: &Uuid) -> Result<Post, String> {
+    fn get(&self, key: &Uuid) -> Result<PostsByIdTableRow, String> {
         match self.connection_pool.get() {
             Ok(mut connection) => {
-                match posts_by_id::table.find(key).first::<Post>(&mut connection) {
+                match posts_by_id::table.find(key).first::<PostsByIdTableRow>(&mut connection) {
                     Ok(post) => Ok(post),
                     Err(e) => Err(format!("Unable to find User: {}", e)),
                 }

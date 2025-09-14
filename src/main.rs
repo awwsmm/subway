@@ -1,9 +1,9 @@
 mod db;
 mod model;
 
+use crate::db::tables::posts_by_id::PostsByIdTableRow;
 use crate::db::Database;
 use crate::model::post::Post;
-use diesel_migrations::MigrationHarness;
 use salvo::catcher::Catcher;
 use salvo::prelude::*;
 use std::fmt::Debug;
@@ -44,7 +44,7 @@ async fn create_post(res: &mut Response) {
     let mut lock = DB.lock().await;
     let table = &mut lock.posts_by_id;
 
-    match table.insert(Post::new(String::from("default title"))) {
+    match table.insert(Post::new(String::from("default title")).into()) {
         Ok(key) => res.render(format!("added new Post to table with id: {}\n\ntable: {:?}", key, table)),
         Err(_) => res.render("error creating Post"),
     }
@@ -62,7 +62,7 @@ async fn get_post(req: &mut Request, res: &mut Response) {
         Ok(key) => {
             match table.get(&key) {
                 Err(e) => res.render(format!("error getting Post by id: {}", e)),
-                Ok(post) => res.render(Json(post)),
+                Ok(post) => res.render(Json(Into::<PostsByIdTableRow>::into(post))),
             }
         }
     }

@@ -1,23 +1,8 @@
-use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use diesel::{Insertable, Queryable};
-
-use diesel::table;
-
-table! {
-    posts_by_id {
-        id -> Uuid,
-        title -> Text,
-    }
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug)]
-#[derive(Insertable, Queryable)]
-#[diesel(table_name = posts_by_id)]
 pub(crate) struct Post {
-    id: Uuid,
-    title: String,
+    pub(crate) id: Uuid,
+    pub(crate) title: String,
 }
 
 // We add a new() function to avoid
@@ -32,10 +17,5 @@ impl Post {
             id: Uuid::new_v4(),
             title,
         }
-
-    }
-
-    pub(crate) fn id(&self) -> &Uuid {
-        &self.id
     }
 }

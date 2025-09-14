@@ -1,13 +1,12 @@
 use crate::db::table::in_memory::InMemoryTable;
 use crate::db::table::Table;
-use crate::db::tables::posts_by_id::PostsByIdTableLike;
-use crate::model::post::Post;
+use crate::db::tables::posts_by_id::{PostsByIdTableLike, PostsByIdTableRow};
 use std::fmt::Debug;
 use uuid::Uuid;
 
 #[derive(Debug)]
 pub(crate) struct Impl {
-    delegate: InMemoryTable<Uuid, Post>,
+    delegate: InMemoryTable<Uuid, PostsByIdTableRow>,
 }
 
 // We add a new() function to avoid making 'delegate' public
@@ -18,11 +17,11 @@ impl Impl {
 }
 
 impl PostsByIdTableLike for Impl {
-    fn insert(&mut self, row: Post) -> Result<Uuid, String> {
+    fn insert(&mut self, row: PostsByIdTableRow) -> Result<Uuid, String> {
         self.delegate.insert(row)
     }
 
-    fn get(&self, key: &Uuid) -> Result<Post, String> {
+    fn get(&self, key: &Uuid) -> Result<PostsByIdTableRow, String> {
         self.delegate.get(key)
     }
 }
