@@ -2,7 +2,7 @@
 
 ## backend-only development
 
-When running locally with Cargo, all dependencies are in-memory. This allows for fast iteration without worrying about networking, containers, and so on. This method of building the project does not require an Internet connection.
+When running locally with Cargo or [Bacon](https://dystroy.org/bacon), all dependencies are in-memory. This allows for fast iteration without worrying about networking, containers, and so on. This method of building the project does not require an Internet connection.
 
 Execute the following command in a terminal
 
@@ -17,6 +17,21 @@ Visit http://localhost:7878/does-not-exist to see the 404 page.
 Visit http://localhost:7878/swagger-ui to see the API documentation.
 
 Press <kbd>control</kbd> + <kbd>C</kbd> in the terminal to shut down the server.
+
+## hot reloading
+
+Use `bacon` instead of cargo for _hot reloading_ -- if you save any changes to the source code, the app will automatically be rebuilt and rerun
+
+```shell
+bacon run-long
+```
+
+Use hot reloading when
+- you are making lots of small changes and want to test endpoints over and over
+- you are writing OpenAPI docs and want to see them update in real-time (requires refreshing) in the browser
+
+Do not use hot reloading when
+- you are making unrelated changes and want to keep the in-memory application state in place
 
 ## examples
 

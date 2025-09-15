@@ -70,7 +70,7 @@ async fn get_post(req: &mut Request, res: &mut Response) {
 /// Posts are returned as a JSON-formatted list.
 #[endpoint(
     parameters(
-        ("limit" = u32, Path, description = "maximum number of Posts to return")
+        ("limit" = u32, Path, description = "maximum number of Posts to return!")
     ),
     responses(
         (status_code = 200, description = "success response")
