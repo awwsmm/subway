@@ -22,4 +22,8 @@ impl PostsByIdTableLike for Impl {
     fn get(&self, key: &Uuid) -> Result<PostsByIdTableRow, String> {
         self.delegate.get(key)
     }
+
+    fn list(&self, limit: u32) -> Result<Vec<PostsByIdTableRow>, String> {
+        self.delegate.list(limit)
+    }
 }

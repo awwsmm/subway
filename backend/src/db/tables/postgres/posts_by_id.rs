@@ -2,7 +2,7 @@ use crate::db::table::TableRow;
 use crate::db::tables::posts_by_id::{PostsByIdTableLike, PostsByIdTableRow};
 use diesel::dsl::insert_into;
 use diesel::r2d2::{ConnectionManager, Pool};
-use diesel::{table, QueryDsl};
+use diesel::{table, QueryDsl, SelectableHelper};
 use diesel::{PgConnection, RunQueryDsl};
 use std::fmt::Debug;
 use std::sync::Arc;
@@ -24,7 +24,6 @@ pub(crate) struct Impl {
 
 impl PostsByIdTableLike for Impl {
     fn insert(&mut self, row: PostsByIdTableRow) -> Result<Uuid, String> {
-
         match self.connection_pool.get() {
             Ok(mut connection) => {
                 let key = row.primary_key().clone();
@@ -47,10 +46,23 @@ impl PostsByIdTableLike for Impl {
             Ok(mut connection) => {
                 match posts_by_id::table.find(key).first::<PostsByIdTableRow>(&mut connection) {
                     Ok(post) => Ok(post),
-                    Err(e) => Err(format!("Unable to find User: {}", e)),
+                    Err(e) => Err(format!("Unable to find Post: {}", e)),
                 }
             }
             Err(e) => Err(format!("Unable to connect to DB: {}", e)),
+        }
+    }
+
+    fn list(&self, limit: u32) -> Result<Vec<PostsByIdTableRow>, String> {
+        match self.connection_pool.get() {
+            Ok(mut connection) => {
+                match posts_by_id::table.select(PostsByIdTableRow::as_select()).limit(limit as i64).load(&mut connection) {
+                    Ok(posts) => Ok(posts),
+                    Err(e) => Err(format!("Unable to get Posts: {}", e)),
+                }
+            },
+            Err(e) => Err(format!("Unable to connect to DB: {}", e)),
+
         }
     }
 }

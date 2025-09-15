@@ -1,4 +1,4 @@
-use crate::db::table::{TableRow, Table};
+use crate::db::table::{Table, TableRow};
 use std::collections::HashMap;
 use std::hash::Hash;
 
@@ -31,5 +31,9 @@ where
             None => Err("Key not found".to_string()),
             Some(value) => Ok(value.clone()),
         }
+    }
+
+    fn list(&self, limit: u32) -> Result<Vec<Row>, String> {
+        Ok(self.data.values().take(limit as usize).cloned().collect())
     }
 }

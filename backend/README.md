@@ -44,4 +44,16 @@ which will give output like
 {"id":"bd130f53-484a-4aed-a268-847cfca662cd","title":"default title"}
 ```
 
+You can also list all Posts (up to some limit) with
+
+```shell
+curl localhost:7878/post/list/5
+```
+
+which will return the Posts as a JSON list
+
+```
+[{"id":"3c999d9a-aef6-40a2-a276-3ab6bfba1049","title":"default title"},{"id":"2a71a9f9-604a-4629-a982-3605f94edf44","title":"default title"},{"id":"f3f0b8ef-8b34-4ec6-a8dd-b89ff90fc8bc","title":"default title"},{"id":"811d568b-acc1-4727-943c-8ac7e8177182","title":"default title"},{"id":"1f0f411d-195f-41aa-87c2-a8bffcc9cd64","title":"default title"}]
+```
+
 Note that, due to the in-memory nature of the database, all records are wiped when the application is shut down. If you want a persistent database, you'll need Docker. Check out the root [README](../README.md) for more information.

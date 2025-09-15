@@ -34,10 +34,7 @@ async fn not_found(&self, res: &mut Response, ctrl: &mut FlowCtrl) {
     }
 }
 
-// TODO figure out how to document response codes (2xx, 5xx) in OpenAPI
-
 static DB: LazyLock<Mutex<Database>> = LazyLock::new(|| Mutex::new(Database::new()));
-
 
 #[endpoint]
 async fn create_post(res: &mut Response) {
@@ -68,6 +65,29 @@ async fn get_post(req: &mut Request, res: &mut Response) {
     }
 }
 
+/// Returns all Posts up to the specified limit.
+///
+/// Posts are returned as a JSON-formatted list.
+#[endpoint(
+    parameters(
+        ("limit" = u32, Path, description = "maximum number of Posts to return")
+    ),
+    responses(
+        (status_code = 200, description = "success response")
+    )
+)]
+async fn list_posts(req: &mut Request, res: &mut Response) {
+    let lock = DB.lock().await;
+    let table = &lock.posts_by_id;
+
+    let limit = req.param::<u32>("limit").unwrap_or(10);
+
+    match table.list(limit) {
+        Err(e) => res.render(format!("error listing Posts: {}", e)),
+        Ok(posts) => res.render(Json(posts)),
+    }
+}
+
 #[tokio::main]
 async fn main() {
     let acceptor = TcpListener::new("0.0.0.0:7878").bind().await;
@@ -82,8 +102,7 @@ async fn main() {
         .push(Router::with_path("hello").get(hello))
         .push(Router::with_path("post/create").post(create_post))
         .push(Router::with_path("post/get/{id}").get(get_post))
-        // .push(Router::with_path("user/add/{id}/{name}").get(add_user))
-        // .push(Router::with_path("user/get/{id}").get(get_user))
+        .push(Router::with_path("post/list/{limit}").get(list_posts))
         ;
 
     // TODO consider replacing env!("CARGO_PKG_VERSION") with clap's crate_version macro

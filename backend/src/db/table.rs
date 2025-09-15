@@ -14,4 +14,6 @@ pub(crate) trait Table<PrimaryKey, Row> where Row: TableRow<PrimaryKey> {
 
     // get must return Row, not &Row, because diesel::query_dsl::RunQueryDsl<Conn>::first returns an owned value
     fn get(&self, key: &PrimaryKey) -> Result<Row, String>;
+
+    fn list(&self, limit: u32) -> Result<Vec<Row>, String>;
 }
