@@ -5,6 +5,8 @@ use crate::db::tables::posts_by_id::PostsByIdTableRow;
 use crate::db::Database;
 use crate::model::post::Post;
 use salvo::catcher::Catcher;
+use salvo::cors::Cors;
+use salvo::http::Method;
 use salvo::prelude::*;
 use std::fmt::Debug;
 use std::fs;
@@ -98,6 +100,16 @@ async fn main() {
     //     Regex::new("[0-9a-fA-F]{8}-([0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}").unwrap(),
     // );
 
+    let origins = ["http://localhost:4173"];
+
+    let cors = Cors::new()
+        .allow_origin(origins) // Allow specific origins
+        .allow_methods(vec![Method::GET, Method::POST, Method::PUT, Method::DELETE]) // Allow specific HTTP methods
+        // .allow_headers(vec!["Content-Type".into(), "Authorization".into()]) // Allow specific headers
+        .allow_credentials(true) // Allow sending of cookies and authentication headers
+        .max_age(86400) // Cache preflight requests for 24 hours
+        .into_handler();
+
     let router = Router::new()
         .push(Router::with_path("hello").get(hello))
         .push(Router::with_path("post/create").post(create_post))
@@ -116,5 +128,9 @@ async fn main() {
 
     println!("Subway is running at http://localhost:7878");
 
-    Server::new(acceptor).serve(Service::new(router).catcher(catcher)).await;
+    Server::new(acceptor).serve(
+        Service::new(router)
+            .hoop(cors) // Apply the CORS middleware globally
+            .catcher(catcher)
+    ).await;
 }
