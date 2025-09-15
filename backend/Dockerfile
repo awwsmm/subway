@@ -31,7 +31,7 @@ FROM debian:12.11-slim
 WORKDIR /usr/src/app
 
 # Copy the built binary from the previous stage
-COPY --from=builder /usr/src/app/target/release/subway ./
+COPY --from=builder /usr/src/app/target/release/subway-backend ./
 
 # Now copy the resources
 COPY ./resources ./resources
@@ -41,4 +41,4 @@ COPY ./resources ./resources
 EXPOSE 7878
 
 # Command to run the application
-CMD ["./subway"]
+CMD ["./subway-backend"]

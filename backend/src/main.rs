@@ -95,7 +95,7 @@ async fn main() {
 
     let catcher = Catcher::default().hoop(not_found);
 
-    println!("Subway is running ...");
+    println!("Subway is running at http://localhost:7878");
 
     Server::new(acceptor).serve(Service::new(router).catcher(catcher)).await;
 }

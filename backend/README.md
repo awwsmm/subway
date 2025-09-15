@@ -1,4 +1,4 @@
-# subway
+# backend
 
 ## local development without Docker
 
@@ -25,7 +25,7 @@ Press <kbd>control</kbd> + <kbd>C</kbd> in the terminal to shut down the server.
 Test the database by writing to it and reading from it. Create a `Post` with a random `id` and default `title` by executing
 
 ```shell
-curl -X POST $SUBWAY/post/create
+curl -X POST localhost:7878/post/create
 ```
 
 That will print output like
@@ -37,7 +37,7 @@ added new Post to table with id: bd130f53-484a-4aed-a268-847cfca662cd
 Retrieve that Post by executing
 
 ```shell
-curl $SUBWAY/post/get/bd130f53-484a-4aed-a268-847cfca662cd
+curl localhost:7878/post/get/bd130f53-484a-4aed-a268-847cfca662cd
 ```
 
 which will give output like
@@ -55,7 +55,7 @@ Note that building the application in this way (with Docker) requires an Interne
 Build the Docker container image by executing the following command in a terminal
 
 ```shell
-docker build -t subway .
+docker build -t subway-backend .
 ```
 
 Then, run the application and its dependencies with
@@ -77,7 +77,7 @@ Press <kbd>control</kbd> + <kbd>C</kbd> in the terminal to shut down the contain
 Test the database by writing to it and reading from it. Create a `Post` with a random `id` and default `title` by executing
 
 ```shell
-curl -X POST $SUBWAY/post/create
+curl -X POST localhost:7878/post/create
 ```
 
 That will print output like
@@ -89,7 +89,7 @@ added new Post to table with id: bd130f53-484a-4aed-a268-847cfca662cd
 Retrieve that Post by executing
 
 ```shell
-curl $SUBWAY/post/get/bd130f53-484a-4aed-a268-847cfca662cd
+curl localhost:7878/post/get/bd130f53-484a-4aed-a268-847cfca662cd
 ```
 
 which will give output like
