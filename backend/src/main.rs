@@ -1,94 +1,19 @@
 mod db;
 mod model;
+mod handlers;
 
-use crate::db::tables::posts_by_id::PostsByIdTableRow;
 use crate::db::Database;
-use crate::model::post::Post;
 use salvo::catcher::Catcher;
 use salvo::cors::Cors;
 use salvo::http::Method;
 use salvo::prelude::*;
-use std::fmt::Debug;
-use std::fs;
-use std::str::FromStr;
 use std::sync::LazyLock;
 use tokio::sync::Mutex;
-use uuid::Uuid;
 
-#[endpoint]
-async fn hello(res: &mut Response) {
-    let filename = "resources/hello.html";
-    let contents = fs::read_to_string(filename).unwrap();
-    res.render(Text::Html(contents))
-}
-
-#[handler]
-async fn not_found(&self, res: &mut Response, ctrl: &mut FlowCtrl) {
-    if StatusCode::NOT_FOUND == res.status_code.unwrap_or(StatusCode::NOT_FOUND) {
-        // TODO performance improvement possible if we `include_str!` to embed this HTML file
-        //   directly in the binary, rather than reading it from the filesystem each time
-        let filename = "resources/404.html";
-        let contents = fs::read_to_string(filename).unwrap();
-        res.render(Text::Html(contents));
-
-        // Skip remaining error handlers
-        ctrl.skip_rest();
-    }
-}
+// There should be no endpoint definitions here. The purpose of main.rs is just to wire up the
+// endpoint implementations, which themselves live in different files.
 
 static DB: LazyLock<Mutex<Database>> = LazyLock::new(|| Mutex::new(Database::new()));
-
-#[endpoint]
-async fn create_post(res: &mut Response) {
-    let mut lock = DB.lock().await;
-    let table = &mut lock.posts_by_id;
-
-    match table.insert(Post::new(String::from("default title")).into()) {
-        Ok(key) => res.render(format!("added new Post to table with id: {}", key)),
-        Err(_) => res.render("error creating Post"),
-    }
-}
-
-#[endpoint]
-async fn get_post(req: &mut Request, res: &mut Response) {
-    let lock = DB.lock().await;
-    let table = &lock.posts_by_id;
-
-    let id: String = req.param::<String>("id").expect("request did not contain a 'id' param");
-
-    match Uuid::from_str(&id) {
-        Err(_) => res.render(format!("cannot parse {} as UUID\n", id)),
-        Ok(key) => {
-            match table.get(&key) {
-                Err(e) => res.render(format!("error getting Post by id: {}", e)),
-                Ok(post) => res.render(Json(Into::<PostsByIdTableRow>::into(post))),
-            }
-        }
-    }
-}
-
-/// Returns all Posts up to the specified limit.
-///
-/// Posts are returned as a JSON-formatted list.
-#[endpoint(
-    parameters(
-        ("limit" = u32, Path, description = "maximum number of Posts to return!")
-    ),
-    responses(
-        (status_code = 200, description = "success response")
-    )
-)]
-async fn list_posts(req: &mut Request, res: &mut Response) {
-    let lock = DB.lock().await;
-    let table = &lock.posts_by_id;
-
-    let limit = req.param::<u32>("limit").unwrap_or(10);
-
-    match table.list(limit) {
-        Err(e) => res.render(format!("error listing Posts: {}", e)),
-        Ok(posts) => res.render(Json(posts)),
-    }
-}
 
 #[tokio::main]
 async fn main() {
@@ -110,11 +35,49 @@ async fn main() {
         .max_age(86400) // Cache preflight requests for 24 hours
         .into_handler();
 
+    // Endpoints always use the nouns from /model, as plural.
+    //   reproduced from: https://stackoverflow.com/a/32257339/2925434
+    //   For multiple resource items:
+    //
+    //     GET    /resources - returns a list of resource items
+    //     POST   /resources - creates one or many resource items
+    //     PUT    /resources - updates one or many resource items
+    //     PATCH  /resources - partially updates one or many resource items
+    //     DELETE /resources - deletes all resource items
+    //
+    //   And for single resource items:
+    //
+    //     GET    /resources/:id - returns a specific resource item based on :id parameter
+    //     POST   /resources/:id - creates one resource item with specified id (requires validation)
+    //     PUT    /resources/:id - updates a specific resource item
+    //     PATCH  /resources/:id - partially updates a specific resource item
+    //     DELETE /resources/:id - deletes a specific resource item
+    //
+    //   In Rust code, the handler files should be named accordingly, with nouns first
+    //
+    //     GET  /posts     => handlers/posts/get.rs (fn many())
+    //     GET  /posts/:id => handlers/posts/get.rs (fn one())
+    //     POST /posts     => handlers/posts/post.rs (fn many(), fn one())
+    //     etc.
+    //
+    //   Not all endpoints will necessarily be implemented for each model type.
+    //
+    //   The :id parameter (or whatever it is) should always be the primary key of the table which
+    //   stores those objects. To filter at the database level, use query parameters
+    //
+    //     GET /posts?author_id=123&published_after=2025-09-09
+
+    // See https://salvo.rs/guide/concepts/router.html#extracting-parameters-from-routes
+    //   to learn about extracting parameters from routes using Salvo
+    //
+    // See https://salvo.rs/guide/concepts/request#retrieving-query-parameters
+    //   to learn about extracting query parameters
+
     let router = Router::new()
-        .push(Router::with_path("hello").get(hello))
-        .push(Router::with_path("post/create").post(create_post))
-        .push(Router::with_path("post/get/{id}").get(get_post))
-        .push(Router::with_path("post/list/{limit}").get(list_posts))
+        .push(Router::with_path("hello").get(handlers::misc::hello::hello))
+        .push(Router::with_path("posts").post(handlers::posts::post::many))
+        .push(Router::with_path("posts").get(handlers::posts::get::many))
+        .push(Router::with_path("posts/{id}").get(handlers::posts::get::one))
         ;
 
     // TODO consider replacing env!("CARGO_PKG_VERSION") with clap's crate_version macro
@@ -124,7 +87,7 @@ async fn main() {
         .push(doc.into_router("/api-doc/openapi.json"))
         .push(SwaggerUi::new("/api-doc/openapi.json").into_router("swagger-ui"));
 
-    let catcher = Catcher::default().hoop(not_found);
+    let catcher = Catcher::default().hoop(handlers::misc::not_found::not_found);
 
     println!("Subway is running at http://localhost:7878");
 

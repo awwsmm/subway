@@ -2,7 +2,7 @@
 
 ## backend-only development
 
-When running locally with Cargo or [Bacon](https://dystroy.org/bacon), all dependencies are in-memory. This allows for fast iteration without worrying about networking, containers, and so on. This method of building the project does not require an Internet connection.
+When running locally with Cargo or [Bacon](https://dystroy.org/bacon), all dependencies are in-memory. This allows for fast iteration without worrying about networking, containers, and so on. After dependencies are downloaded, this method of building does not require an internet connection.
 
 Execute the following command in a terminal
 
@@ -31,14 +31,14 @@ Use hot reloading when
 - you are writing OpenAPI docs and want to see them update in real-time (requires refreshing) in the browser
 
 Do not use hot reloading when
-- you are making unrelated changes and want to keep the in-memory application state in place
+- you want to keep the in-memory database in place (hot reloading will wipe it out)
 
 ## examples
 
 Test the database by writing to it and reading from it. Create a `Post` with a random `id` and default `title` by executing
 
 ```shell
-curl -X POST localhost:7878/post/create
+curl -X POST localhost:7878/posts
 ```
 
 That will print output like
@@ -53,7 +53,7 @@ Retrieve that Post by executing
 curl localhost:7878/post/get/bd130f53-484a-4aed-a268-847cfca662cd
 ```
 
-which will give output like
+(`-X GET` is assumed by default with `curl` and can be omitted) which will give output like
 
 ```
 {"id":"bd130f53-484a-4aed-a268-847cfca662cd","title":"default title"}
@@ -62,10 +62,10 @@ which will give output like
 You can also list all Posts (up to some limit) with
 
 ```shell
-curl localhost:7878/post/list/5
+curl localhost:7878/posts\?limit=5
 ```
 
-which will return the Posts as a JSON list
+(`\?` is required instead of `?` in a shell) which will return the Posts as a JSON list
 
 ```
 [{"id":"3c999d9a-aef6-40a2-a276-3ab6bfba1049","title":"default title"},{"id":"2a71a9f9-604a-4629-a982-3605f94edf44","title":"default title"},{"id":"f3f0b8ef-8b34-4ec6-a8dd-b89ff90fc8bc","title":"default title"},{"id":"811d568b-acc1-4727-943c-8ac7e8177182","title":"default title"},{"id":"1f0f411d-195f-41aa-87c2-a8bffcc9cd64","title":"default title"}]
