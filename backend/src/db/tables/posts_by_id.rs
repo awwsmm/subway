@@ -29,7 +29,7 @@ impl From<Post> for PostsByIdTableRow {
 }
 
 pub(crate) trait PostsByIdTableLike: Sync + Send {
-    fn insert(&mut self, row: PostsByIdTableRow) -> Result<Uuid, String>;
+    fn insert(&mut self, row: Vec<PostsByIdTableRow>) -> Result<Vec<Uuid>, String>;
     fn get(&self, key: &Uuid) -> Result<PostsByIdTableRow, String>;
     fn list(&self, limit: u32) -> Result<Vec<PostsByIdTableRow>, String>;
 }

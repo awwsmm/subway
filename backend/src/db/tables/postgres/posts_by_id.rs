@@ -2,7 +2,7 @@ use crate::db::table::TableRow;
 use crate::db::tables::posts_by_id::{PostsByIdTableLike, PostsByIdTableRow};
 use diesel::dsl::insert_into;
 use diesel::r2d2::{ConnectionManager, Pool};
-use diesel::{table, QueryDsl, SelectableHelper};
+use diesel::{table, Connection, QueryDsl, SelectableHelper};
 use diesel::{PgConnection, RunQueryDsl};
 use std::fmt::Debug;
 use std::sync::Arc;
@@ -23,19 +23,21 @@ pub(crate) struct Impl {
 // TODO pull this implementation out into a default trait
 
 impl PostsByIdTableLike for Impl {
-    fn insert(&mut self, row: PostsByIdTableRow) -> Result<Uuid, String> {
+    fn insert(&mut self, rows: Vec<PostsByIdTableRow>) -> Result<Vec<Uuid>, String> {
         match self.connection_pool.get() {
             Ok(mut connection) => {
-                let key = row.primary_key().clone();
-                match insert_into(posts_by_id::table).values(row).execute(&mut connection) {
-                    Ok(_) => {
-                        match self.get(&key) {
-                            Err(e) => Err(format!("Unable writing to DB: {}", e)),
-                            Ok(post) => Ok(post.primary_key().clone()),
+                connection.transaction::<_, _, _>(|conn| {
+                    rows.into_iter().try_fold(vec![], |mut vec, row| {
+                        let pk = row.primary_key().clone();
+                        match insert_into(posts_by_id::table).values(row).execute(conn) {
+                            Ok(_) => {
+                                vec.push(pk);
+                                Ok(vec)
+                            },
+                            Err(e) => Err(e),
                         }
-                    },
-                    Err(e) => Err(format!("Unable to insert Post: {}", e)),
-                }
+                    })
+                }).map_err(|e| e.to_string())
             }
             Err(e) => Err(format!("Unable to connect to DB: {}", e)),
         }

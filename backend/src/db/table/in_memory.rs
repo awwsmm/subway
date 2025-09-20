@@ -20,10 +20,13 @@ where
     Row: TableRow<PrimaryKey>,
     Row: Clone, // required to turn &V into V after calling .get()
 {
-    fn insert(&mut self, row: Row) -> Result<PrimaryKey, String> {
-        let key = row.primary_key().clone();
-        self.data.insert(row.primary_key().clone(), row);
-        Ok(key)
+    fn insert(&mut self, rows: Vec<Row>) -> Result<Vec<PrimaryKey>, String> {
+        rows.into_iter().try_fold(vec![], |mut vec, row| {
+            let pk = row.primary_key().clone();
+            self.data.insert(pk.clone(), row);
+            vec.push(pk);
+            Ok(vec)
+        })
     }
 
     fn get(&self, key: &PrimaryKey) -> Result<Row, String> {

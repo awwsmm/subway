@@ -35,19 +35,21 @@ Do not use hot reloading when
 
 ## examples
 
-Test the database by writing to it and reading from it. Create a `Post` with a random `id` and default `title` by executing
+Test the database by writing to it and reading from it. Create one or more `Post`s with random `id`s by executing
 
 ```shell
-curl -X POST localhost:7878/posts
+curl -X POST localhost:7878/posts \
+  --header "Content-Type: text/json" \
+  --data '[{"title": "hello, world!"},{"title": "second post"}]'
 ```
 
 That will print output like
 
 ```
-added new Post to table with id: bd130f53-484a-4aed-a268-847cfca662cd
+added new Post to table with ids: [bd130f53-484a-4aed-a268-847cfca662cd, 1590e22e-825d-42a5-a794-9655df593465]
 ```
 
-Retrieve that Post by executing
+Retrieve a Post by executing
 
 ```shell
 curl localhost:7878/post/get/bd130f53-484a-4aed-a268-847cfca662cd
@@ -56,7 +58,7 @@ curl localhost:7878/post/get/bd130f53-484a-4aed-a268-847cfca662cd
 (`-X GET` is assumed by default with `curl` and can be omitted) which will give output like
 
 ```
-{"id":"bd130f53-484a-4aed-a268-847cfca662cd","title":"default title"}
+{"id":"bd130f53-484a-4aed-a268-847cfca662cd","title":"hello, world!"}
 ```
 
 You can also list all Posts (up to some limit) with

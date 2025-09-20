@@ -15,8 +15,8 @@ impl Impl {
 }
 
 impl PostsByIdTableLike for Impl {
-    fn insert(&mut self, row: PostsByIdTableRow) -> Result<Uuid, String> {
-        self.delegate.insert(row)
+    fn insert(&mut self, rows: Vec<PostsByIdTableRow>) -> Result<Vec<Uuid>, String> {
+        self.delegate.insert(rows)
     }
 
     fn get(&self, key: &Uuid) -> Result<PostsByIdTableRow, String> {
