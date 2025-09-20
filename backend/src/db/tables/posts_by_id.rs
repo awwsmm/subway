@@ -22,8 +22,8 @@ impl TableRow<Uuid> for PostsByIdTableRow {
 impl From<Post> for PostsByIdTableRow {
     fn from(value: Post) -> Self {
         Self {
-            id: value.id,
-            title: value.title,
+            id: value.id(),
+            title: value.title().to_string(),
         }
     }
 }

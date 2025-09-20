@@ -1,8 +1,8 @@
 use uuid::Uuid;
 
 pub(crate) struct Post {
-    pub(crate) id: Uuid,
-    pub(crate) title: String,
+    id: Uuid, // note: Uuid implements Copy
+    title: String,
 }
 
 // We add a new() function to avoid
@@ -17,5 +17,13 @@ impl Post {
             id: Uuid::new_v4(),
             title,
         }
+    }
+
+    pub(crate) fn id(&self) -> Uuid {
+        self.id
+    }
+    
+    pub(crate) fn title(&self) -> &str {
+        &self.title
     }
 }
