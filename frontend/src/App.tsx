@@ -22,7 +22,7 @@ interface Post {
 }
 
 async function listPosts(limit: number): Promise<Post[]> {
-    return typedFetch<Post[]>(`http://0.0.0.0:7878/post/list/${limit}`);
+    return typedFetch<Post[]>(`http://0.0.0.0:7878/posts?limit=${limit}`);
 }
 
 // async function createProduct(productData: Omit<Product, 'id'>): Promise<Product> {

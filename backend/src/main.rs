@@ -25,7 +25,7 @@ async fn main() {
     //     Regex::new("[0-9a-fA-F]{8}-([0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}").unwrap(),
     // );
 
-    let origins = ["http://localhost:4173"];
+    let origins = ["http://localhost:4173", "http://localhost:5173"];
 
     let cors = Cors::new()
         .allow_origin(origins) // Allow specific origins
