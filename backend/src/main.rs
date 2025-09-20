@@ -78,6 +78,9 @@ async fn main() {
         .push(Router::with_path("posts").post(handlers::posts::post::many))
         .push(Router::with_path("posts").get(handlers::posts::get::many))
         .push(Router::with_path("posts/{id}").get(handlers::posts::get::one))
+        .push(Router::with_path("authors").post(handlers::authors::post::many))
+        .push(Router::with_path("authors").get(handlers::authors::get::many))
+        .push(Router::with_path("authors/{id}").get(handlers::authors::get::one))
         ;
 
     // TODO consider replacing env!("CARGO_PKG_VERSION") with clap's crate_version macro

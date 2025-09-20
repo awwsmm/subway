@@ -4,3 +4,4 @@ pub(crate) mod postgres;
 
 // list of tables
 pub(crate) mod posts_by_id;
+pub(crate) mod authors_by_id;
