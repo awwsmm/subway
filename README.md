@@ -37,3 +37,9 @@ Note that records are persisted on your local disk when the application is shut 
 ```shell
 docker-compose down -v
 ```
+
+## `keycloak`
+
+`subway` uses [keycloak](https://www.keycloak.org/) for user authentication and authorization.
+
+`keycloak/realm-export.json` configures some default users for testing and development.

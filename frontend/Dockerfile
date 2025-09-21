@@ -27,7 +27,7 @@ WORKDIR /app
 COPY --from=builder /app/dist ./dist
 
 # Expose port
-EXPOSE 4173
+EXPOSE 5173
 
 # Serve the app
-CMD ["serve", "-s", "dist", "-l", "4173"]
+CMD ["serve", "-s", "dist", "-l", "5173"]

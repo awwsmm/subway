@@ -1,44 +1,46 @@
 services:
-  db:
+  db_container:
     image: postgres:17.6
     container_name: postgres-db
     restart: unless-stopped
     ports:
-      - "5432:5432" # TODO not prod-ready
+      - "2345:5432" # TODO not prod-ready
     environment:
-      POSTGRES_USER: benchmarkdbuser # TODO not prod-ready
-      POSTGRES_PASSWORD: benchmarkdbpass # TODO not prod-ready
-      POSTGRES_DB: mydatabase # TODO not prod-ready
+      POSTGRES_USER: postgres_user # TODO not prod-ready
+      POSTGRES_PASSWORD: postgres_password # TODO not prod-ready
+      POSTGRES_DB: postgres_db # TODO not prod-ready
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U benchmarkdbuser -d mydatabase" ] # TODO not prod-ready
+      test: [ "CMD-SHELL", "pg_isready -U postgres_user -d postgres_db" ] # TODO not prod-ready
       interval: 5s
       timeout: 5s
       retries: 5
 
   # TODO not prod-ready
   keycloak:
-    image: keycloak/keycloak:26.3.4-0
+    image: quay.io/keycloak/keycloak:26.3.4-0
     container_name: keycloak
     restart: unless-stopped
     ports:
-      - "8989:8989" # TODO not prod-ready
+      - "8989:8080" # TODO not prod-ready
     environment:
-      KEYCLOAK_ADMIN: my_example_admin_user
-      KEYCLOAK_ADMIN_PASSWORD: my_example_password
-    command: start-dev
+      KC_BOOTSTRAP_ADMIN_USERNAME: kc_bootstrap_admin_username # use this to log in at localhost:8989
+      KC_BOOTSTRAP_ADMIN_PASSWORD: kc_bootstrap_admin_password # use this to log in at localhost:8989
+    command: start-dev --import-realm
+    volumes:
+      - ./keycloak/realm-export.json:/opt/keycloak/data/import/realm-export.json
 
   subway-backend:
     image: subway-backend
     container_name: subway-backend
     restart: unless-stopped
     ports:
-      - "7878:7878" # TODO not prod-ready
+      - "7878:7878" # TODO not prod-ready. Also, keep these the same so running in / outside a container uses the same port
     environment:
-      DATABASE_URL: postgres://benchmarkdbuser:benchmarkdbpass@db:5432/mydatabase # TODO not prod-ready
+      DATABASE_URL: postgres://postgres_user:postgres_password@db_container:2345/postgres_db # TODO not prod-ready
     depends_on:
-      db:
+      db_container:
         condition: service_healthy
 
   subway-frontend:
@@ -46,7 +48,7 @@ services:
     container_name: subway-frontend
     restart: unless-stopped
     ports:
-      - "4173:4173" # TODO not prod-ready
+      - "5173:5173" # TODO not prod-ready. Also, keep these the same so running in / outside a container uses the same port
 
 volumes:
   pgdata:
