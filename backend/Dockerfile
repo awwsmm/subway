@@ -22,7 +22,7 @@ COPY ./src ./src
 COPY ./migrations ./migrations
 
 # Build the application
-RUN cargo build --release --features "postgres"
+RUN cargo build --release
 
 # Start a new stage to create a smaller image without unnecessary build dependencies
 FROM debian:12.11-slim
@@ -39,6 +39,8 @@ COPY ./resources ./resources
 # Expose the port
 # TODO define this in an env var which is read by this Dockerfile and also by main.rs
 EXPOSE 7878
+
+ENV SUBWAY_ENV="docker"
 
 # Command to run the application
 CMD ["./subway-backend"]

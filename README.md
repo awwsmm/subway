@@ -35,7 +35,7 @@ docker-compose up
 Note that records are persisted on your local disk when the application is shut down. If you want to clear the database, run
 
 ```shell
-docker-compose down -v
+docker-compose down -v --remove-orphans
 ```
 
 ## `keycloak`

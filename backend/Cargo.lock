@@ -2568,7 +2568,6 @@ version = "0.1.0"
 dependencies = [
  "diesel",
  "diesel_migrations",
- "once_cell",
  "openssl-sys",
  "pq-sys",
  "salvo",

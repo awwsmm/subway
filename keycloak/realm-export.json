@@ -16,6 +16,9 @@
       "username": "testuser",
       "enabled": true,
       "emailVerified": true,
+      "firstName": "Test",
+      "lastName": "User",
+      "email": "test@user.com",
       "credentials": [
         {
           "type": "password",
