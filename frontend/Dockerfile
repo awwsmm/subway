@@ -9,7 +9,7 @@ COPY package.json package-lock.json* ./
 # Install dependencies
 RUN npm ci
 
-# Copy source files
+# Copy source files, including .env.local, which is used to configure 'npm run build'
 COPY . .
 
 # Build the project

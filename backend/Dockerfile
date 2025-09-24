@@ -40,7 +40,7 @@ COPY ./resources ./resources
 # TODO define this in an env var which is read by this Dockerfile and also by main.rs
 EXPOSE 7878
 
-ENV SUBWAY_ENV="docker"
+ENV SUBWAY_DB_MODE="docker"
 
 # Command to run the application
 CMD ["./subway-backend"]

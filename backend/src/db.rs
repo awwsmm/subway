@@ -20,8 +20,8 @@ pub(crate) struct Database {
 
 impl Database {
     pub(crate) fn new() -> Self {
-        if std::env::var("SUBWAY_ENV").is_ok_and(|env| env == "docker") {
-            let db_url = std::env::var("DATABASE_URL").expect("DATABASE_URL not defined");
+        if std::env::var("SUBWAY_DB_MODE").is_ok_and(|env| env == "docker") {
+            let db_url = std::env::var("SUBWAY_DB_URL").expect("SUBWAY_DB_URL not defined");
             let manager = ConnectionManager::<PgConnection>::new(db_url);
             let n_connections = 10;
 
