@@ -19,11 +19,11 @@ To run the full-stack application, you must first build both the `frontend` and 
 Note that building the application in this way (with Docker) requires an Internet connection.
 
 ```shell
-cd frontend && docker build -t subway-frontend . && cd ..
+cd frontend && docker build -t subway-frontend . ; cd ..
 ```
 
 ```shell
-cd backend && docker build -t subway-backend . && cd ..
+cd backend && docker build -t subway-backend . ; cd ..
 ```
 
 then, you can run the full stack with `docker-compose`
@@ -31,6 +31,8 @@ then, you can run the full stack with `docker-compose`
 ```shell
 docker-compose up
 ```
+
+and visit http://localhost:5173 in the browser
 
 Note that records are persisted on your local disk when the application is shut down. If you want to clear the database, run
 

@@ -38,6 +38,9 @@ async function listPosts(limit: number): Promise<Post[]> {
 // }
 
 function App() {
+
+    console.log(`VITE_SUBWAY_AUTH_MODE == ${import.meta.env.VITE_SUBWAY_AUTH_MODE}`)
+
     const path = window.location.pathname;
 
     if (path === '/login') {
