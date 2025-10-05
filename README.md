@@ -45,3 +45,7 @@ docker-compose down -v --remove-orphans
 `subway` uses [keycloak](https://www.keycloak.org/) for user authentication and authorization.
 
 `keycloak/realm-export.json` configures some default users for testing and development.
+
+With the app running, visit http://localhost:5173/login to view the login page, or http://localhost:5173/protected to view a protected page.
+
+Login with the dummy users `admin` (password `admin`), `bob` (password `bob`), or `clara` (password `clara`).
