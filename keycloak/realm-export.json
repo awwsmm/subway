@@ -11,18 +11,71 @@
       "standardFlowEnabled": true
     }
   ],
+  "roles": {
+    "realm": [
+      {
+        "id": "role-id-1",
+        "name": "admin",
+        "description": "Administrator role"
+      },
+      {
+        "id": "role-id-2",
+        "name": "user",
+        "description": "Standard user role"
+      }
+    ]
+  },
   "users": [
     {
-      "username": "testuser",
+      "username": "admin",
       "enabled": true,
       "emailVerified": true,
-      "firstName": "Test",
+      "firstName": "Admin",
       "lastName": "User",
-      "email": "test@user.com",
+      "email": "admin@user.com",
+      "realmRoles": [
+        "admin", "user"
+      ],
       "credentials": [
         {
           "type": "password",
-          "value": "testpassword",
+          "value": "admin",
+          "temporary": false
+        }
+      ]
+    },
+    {
+      "username": "bob",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Bob",
+      "lastName": "User",
+      "email": "bob@user.com",
+      "realmRoles": [
+        "user"
+      ],
+      "credentials": [
+        {
+          "type": "password",
+          "value": "bob",
+          "temporary": false
+        }
+      ]
+    },
+    {
+      "username": "clara",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Clara",
+      "lastName": "User",
+      "email": "clara@user.com",
+      "realmRoles": [
+        "user"
+      ],
+      "credentials": [
+        {
+          "type": "password",
+          "value": "clara",
           "temporary": false
         }
       ]

@@ -13,27 +13,15 @@ const Protected: React.FC = () => {
         if (keycloak.authenticated) {
             setAuthenticated(true);
             setLoading(false);
-
         } else {
             keycloak
-                .init({
-                    onLoad: 'check-sso',
-                    silentCheckSsoRedirectUri: `${window.location.origin}/silent-check-sso.html`
-                })
-                .then(auth => {
-
-                    console.log(`!auth == ${!auth}, !keycloak.authenticated == ${!keycloak.authenticated}, authenticated == ${authenticated}`)
-
-                    if (!auth && !keycloak.authenticated) {
-                        void keycloak.login({redirectUri: window.location.href});
-                    } else {
-                        setAuthenticated(true);
-                    }
-
+                .init({onLoad: "login-required"}) // or "check-sso" if you want silent login
+                .then((auth) => {
+                    setAuthenticated(auth);
                     setLoading(false);
                 })
-                .catch(err => {
-                    console.error('Keycloak init error:', err);
+                .catch((err) => {
+                    console.error("Keycloak init error:", err);
                     setLoading(false);
                 });
         }
@@ -42,7 +30,7 @@ const Protected: React.FC = () => {
     if (loading) return <p>Loading...</p>;
 
     if (!authenticated) {
-        return <p>Redirecting to login...</p>;
+        return <p>Unable to authenticate.</p>;
     }
 
     return (

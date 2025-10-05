@@ -15,16 +15,22 @@ type FakeUser = {
     roles: string[];
 };
 
+// try to keep this and realm-export.json in sync for ease of in-memory vs. docker testing
 const mockUsers: Record<string, FakeUser> = {
-    'dev-user': {
-        username: 'dev-user',
-        email: 'dev@example.com',
-        roles: ['user'],
-    },
     'admin': {
         username: 'admin',
-        email: 'admin@example.com',
-        roles: ['admin'],
+        email: 'admin@user.com',
+        roles: ['admin', 'user'],
+    },
+    'bob': {
+        username: 'bob',
+        email: 'bob@user.com',
+        roles: ['user'],
+    },
+    'clara': {
+        username: 'clara',
+        email: 'clara@user.com',
+        roles: ['user'],
     },
 };
 
@@ -92,7 +98,7 @@ const keycloak: Keycloak = {
 
             if (onLoad === 'login-required') {
                 // Simulate interactive login (prompt or auto-login)
-                const username = prompt('Enter username to login (e.g., dev-user, admin):');
+                const username = prompt('Enter username to login (e.g., admin, bob, clara):');
                 if (username && mockUsers[username]) {
                     currentUser = mockUsers[username];
                     localStorage.setItem('fakeUser', username);
@@ -142,7 +148,7 @@ const keycloak: Keycloak = {
     // @ts-expect-error: unused parameter
     login(options?: KeycloakLoginOptions): Promise<void> {
         // Simulate login UI (for dev you can auto-login or use prompt)
-        const username = prompt('Enter username to login (e.g., dev-user, admin):');
+        const username = prompt('Enter username to login (e.g., admin, bob, clara):');
 
         if (username && mockUsers[username]) {
             currentUser = mockUsers[username];
