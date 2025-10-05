@@ -14,6 +14,8 @@ To run the frontend by itself, see [frontend/README.md](frontend/README.md).
 
 ## fullstack development
 
+### Containerized
+
 To run the full-stack application, you must first build both the `frontend` and the `backend` Docker container images.
 
 Note that building the application in this way (with Docker) requires an Internet connection.
@@ -39,6 +41,28 @@ Note that records are persisted on your local disk when the application is shut 
 ```shell
 docker-compose down -v --remove-orphans
 ```
+
+### Hot Reloading
+
+If Docker is unnecessary for the development work you're doing (if you don't need a persistent database or realistic authentication, etc.), you can develop in _hot reloading_ mode. This is usually the easiest way to develop.
+
+Run the backend from the `backend/` directory in one terminal with the command
+
+```shell
+bacon run-long
+```
+
+...and run the frontend from the `frontend/` directory in a different terminal with
+
+```shell
+npm run dev
+```
+
+Then visit http://localhost:5173 in the browser.
+
+In _hot reloading_ mode, you never need to re-build or re-run either the frontend or the backend. Simply save your changes and `bacon` / `npm` will automatically restart the backend / frontend, respectively.
+
+Note that when the backend restarts, the database will be wiped; similarly, when the frontend restarts, you will need to re-authenticate as your dummy user of choice.
 
 ## `keycloak`
 
