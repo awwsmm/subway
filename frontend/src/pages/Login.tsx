@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React, {useEffect, useState} from "react";
 import realKeycloak from "../auth/keycloak";
 import fakeKeycloak from "../auth/fakeKeycloak.ts";
+import {Link} from "react-router-dom";
 
 const Login: React.FC = () => {
     const [authenticated, setAuthenticated] = useState(false);
@@ -37,9 +38,16 @@ const Login: React.FC = () => {
         <div>
             <h1>Welcome, {keycloak.tokenParsed?.preferred_username}!</h1>
             <p>You are logged in via Keycloak.</p>
-            <button onClick={() => keycloak.logout({ redirectUri: window.location.origin })}>
-                Logout
-            </button>
+            <div>
+                <button onClick={() => keycloak.logout({ redirectUri: window.location.origin })}>
+                    Logout
+                </button>
+            </div>
+            <div>
+                <button>
+                    <Link to="/">Back to Home</Link>
+                </button>
+            </div>
         </div>
     );
 };
