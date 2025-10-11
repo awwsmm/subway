@@ -12,3 +12,6 @@ diesel = { version = "2.2.12", features = ["r2d2", "postgres", "uuid"] }
 pq-sys = { version = "0.7.2", features = ["bundled"] } # required by diesel, even though we do not use it directly
 openssl-sys = { version = "0.9.100", features = ["vendored"] } # required by diesel, even though we do not use it directly
 diesel_migrations = "2.2.0"
+jsonwebtoken = { version = "10.0.0", features = ["rust_crypto"] }
+reqwest = { version = "0.12.23", features = ["json"] }
+serde_json = "1.0.145"

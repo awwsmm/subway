@@ -1,15 +1,16 @@
 mod db;
 mod model;
 mod handlers;
+mod keycloak_auth_middleware;
 
 use crate::db::Database;
+use crate::keycloak_auth_middleware::KeycloakAuth;
 use salvo::catcher::Catcher;
 use salvo::cors::Cors;
 use salvo::http::Method;
 use salvo::prelude::*;
 use std::sync::LazyLock;
 use tokio::sync::Mutex;
-
 // There should be no endpoint definitions here. The purpose of main.rs is just to wire up the
 // endpoint implementations, which themselves live in different files.
 
@@ -73,7 +74,7 @@ async fn main() {
     // See https://salvo.rs/guide/concepts/request#retrieving-query-parameters
     //   to learn about extracting query parameters
 
-    let router = Router::new()
+    let public_router = Router::new()
         .push(Router::with_path("hello").get(handlers::misc::hello::hello))
         .push(Router::with_path("posts").post(handlers::posts::post::many))
         .push(Router::with_path("posts").get(handlers::posts::get::many))
@@ -84,18 +85,48 @@ async fn main() {
         ;
 
     // TODO consider replacing env!("CARGO_PKG_VERSION") with clap's crate_version macro
-    let doc = OpenApi::new("test api", env!("CARGO_PKG_VERSION")).merge_router(&router);
+    let doc = OpenApi::new("test api", env!("CARGO_PKG_VERSION")).merge_router(&public_router);
 
-    let router = router
+    let public_router = public_router
         .push(doc.into_router("/api-doc/openapi.json"))
         .push(SwaggerUi::new("/api-doc/openapi.json").into_router("swagger-ui"));
+
+    // // Configuration for Keycloak
+    // let kaycloak_auth_instance = KeycloakAuthInstance::new(KeycloakConfig {
+    //     server: Url::parse("0.0.0.0:8080").expect("keycloah kno!"), // server: Url
+    //     realm: String::from("myrealm"), // realm: String
+    //     retry: (10, 1), // retry (usize, u64)
+    // });
+
+    // let keycloak_auth_layer = KeycloakAuthLayer::<String>::builder()
+    //     .instance(kaycloak_auth_instance)
+    //     .expected_audiences(vec![String::from("account")])
+    //     .required_roles(vec![String::from("user")])
+    //     .build();
+
+    let jwks_url = "http://0.0.0.0:8080/realms/myrealm/protocol/openid-connect/certs";
+    let client_id = "my-rust-client";
+
+    println!("FINDME 001");
+
+    let auth = KeycloakAuth::from_jwk_url(jwks_url, client_id).await.unwrap();
+
+    println!("FINDME 002");
+
+    // Define the protected routes with the Keycloak authentication layer
+    let protected_router = Router::with_path("/protected")
+        .hoop(auth) // Apply the middleware here
+        .get(handlers::misc::protected::protected);
+
+    println!("FINDME 003");
 
     let catcher = Catcher::default().hoop(handlers::misc::not_found::not_found);
 
     println!("Subway is running at http://localhost:7878");
 
     Server::new(acceptor).serve(
-        Service::new(router)
+        Service::new(public_router
+            .push(protected_router))
             .hoop(cors) // Apply the CORS middleware globally
             .catcher(catcher)
     ).await;

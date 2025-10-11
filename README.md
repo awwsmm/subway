@@ -73,3 +73,41 @@ Note that when the backend restarts, the database will be wiped; similarly, when
 With the app running, visit http://localhost:5173/login to view the login page, or http://localhost:5173/protected to view a protected page.
 
 Login with the dummy users `admin` (password `admin`), `bob` (password `bob`), or `clara` (password `clara`).
+
+### protected endpoints
+
+There is a protected endpoint at http://localhost:7878/protected
+
+If you try to access it unauthorized...
+
+```shell
+curl http://localhost:7878/protected
+```
+
+...you will get a response like
+
+```
+Missing or malformed Authorization header
+```
+
+You must first acquire an auth token
+
+```shell
+export AUTH_TOKEN=$(curl -d 'client_id=admin-cli' -d 'username=kc_bootstrap_admin_username' -d 'password=kc_bootstrap_admin_password' -d 'grant_type=password' http://localhost:8989/realms/master/protocol/openid-connect/token | jq -r .access_token)
+```
+
+You can then `curl` this endpoint like
+
+```shell
+curl -H "Authorization: Bearer $AUTH_TOKEN" http://localhost:7878/protected
+```
+
+You should receive a response like
+
+```
+welcome, authenticated user
+```
+
+All of this is currently a WIP. It is messy. I am committing it, though, so I don't lose this functionality.
+
+I have only tested this with Docker so far, not with the in-memory Keycloak.
