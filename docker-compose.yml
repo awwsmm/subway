@@ -27,7 +27,7 @@ services:
     environment:
       KC_BOOTSTRAP_ADMIN_USERNAME: kc_bootstrap_admin_username # use this to log in at localhost:8989
       KC_BOOTSTRAP_ADMIN_PASSWORD: kc_bootstrap_admin_password # use this to log in at localhost:8989
-    command: start-dev --import-realm
+    command: start-dev --import-realm # TODO development node, not prod-ready
     volumes:
       - ./keycloak/realm-export.json:/opt/keycloak/data/import/realm-export.json
 
@@ -42,6 +42,8 @@ services:
     depends_on:
       db_container:
         condition: service_healthy
+      keycloak_container:
+        condition: service_started # TODO not prod-ready, create custom keycloak container with healthcheck
 
   subway-frontend:
     image: subway-frontend
@@ -49,6 +51,9 @@ services:
     restart: unless-stopped
     ports:
       - "5173:5173" # TODO not prod-ready. Also, keep these the same so running in / outside a container uses the same port
+    depends_on:
+      subway-backend:
+        condition: service_started # TODO not prod-ready, add healthcheck to backend
 
 volumes:
   pgdata:

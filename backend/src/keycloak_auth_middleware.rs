@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use jsonwebtoken::{decode, errors::Error as JwtError, Algorithm, DecodingKey, TokenData, Validation};
+use jsonwebtoken::{decode, decode_header, errors::Error as JwtError, Algorithm, DecodingKey, TokenData, Validation};
 use reqwest::Client;
 use salvo::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -53,15 +53,20 @@ impl KeycloakAuth {
         params.insert("username", "kc_bootstrap_admin_username");
         params.insert("password", "kc_bootstrap_admin_password");
 
-        let token_maybe = client
+        let response = client
             .post("http://keycloak_container:8080/realms/master/protocol/openid-connect/token")
             .form(&params)
             .send()
-            .await?
+            .await?;
+
+        let token_maybe = response
             .json::<TokenResponse>()
             .await?;
 
         println!("token_maybe {:?}", token_maybe);
+
+        let header = decode_header(token_maybe.access_token.clone()).unwrap();
+        println!("Header: {:?}", header);
 
         // ---
 
@@ -73,7 +78,7 @@ impl KeycloakAuth {
         println!("JWK found: {:?}", jwks);
 
         // Use the first key from the JWKs (in real use, you should match "kid")
-        let jwk = jwks["keys"][0].clone();
+        let jwk = jwks["keys"].as_array().unwrap().iter().find(|arr| arr.as_object().unwrap().get("kid").unwrap().as_str().unwrap() == header.kid.clone().unwrap()).unwrap();
 
         let n = jwk["n"].as_str().unwrap();
         let e = jwk["e"].as_str().unwrap();
