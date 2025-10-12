@@ -91,34 +91,12 @@ async fn main() {
         .push(doc.into_router("/api-doc/openapi.json"))
         .push(SwaggerUi::new("/api-doc/openapi.json").into_router("swagger-ui"));
 
-    // // Configuration for Keycloak
-    // let kaycloak_auth_instance = KeycloakAuthInstance::new(KeycloakConfig {
-    //     server: Url::parse("0.0.0.0:8080").expect("keycloah kno!"), // server: Url
-    //     realm: String::from("myrealm"), // realm: String
-    //     retry: (10, 1), // retry (usize, u64)
-    // });
-
-    // let keycloak_auth_layer = KeycloakAuthLayer::<String>::builder()
-    //     .instance(kaycloak_auth_instance)
-    //     .expected_audiences(vec![String::from("account")])
-    //     .required_roles(vec![String::from("user")])
-    //     .build();
-
-    let jwks_url = "http://0.0.0.0:8080/realms/myrealm/protocol/openid-connect/certs";
-    let client_id = "my-rust-client";
-
-    println!("FINDME 001");
-
-    let auth = KeycloakAuth::from_jwk_url(jwks_url, client_id).await.unwrap();
-
-    println!("FINDME 002");
+    let auth = KeycloakAuth::new();
 
     // Define the protected routes with the Keycloak authentication layer
     let protected_router = Router::with_path("/protected")
         .hoop(auth) // Apply the middleware here
         .get(handlers::misc::protected::protected);
-
-    println!("FINDME 003");
 
     let catcher = Catcher::default().hoop(handlers::misc::not_found::not_found);
 

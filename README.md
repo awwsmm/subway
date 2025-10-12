@@ -99,7 +99,7 @@ export AUTH_TOKEN=$(curl -d 'client_id=admin-cli' -d 'username=kc_bootstrap_admi
 You can then `curl` this endpoint like
 
 ```shell
-curl -H "Authorization: Bearer $AUTH_TOKEN" http://localhost:7878/protected
+curl -H "Authorization: Bearer $AUTH_TOKEN" -H "x-realm: master" http://localhost:7878/protected
 ```
 
 You should receive a response like
@@ -111,3 +111,13 @@ welcome, authenticated user
 All of this is currently a WIP. It is messy. I am committing it, though, so I don't lose this functionality.
 
 I have only tested this with Docker so far, not with the in-memory Keycloak.
+
+Note that, if you want to use the `admin`, `bob`, or `clara` users, you must specify the `myrealm` realm both when acquiring and using the `AUTH_TOKEN`
+
+```shell
+export AUTH_TOKEN=$(curl -d 'client_id=admin-cli' -d 'username=bob' -d 'password=bob' -d 'grant_type=password' http://localhost:8989/realms/myrealm/protocol/openid-connect/token | jq -r .access_token)
+```
+
+```shell
+curl -H "Authorization: Bearer $ATOKEN" -H "x-realm: myrealm" http://localhost:7878/protected
+```

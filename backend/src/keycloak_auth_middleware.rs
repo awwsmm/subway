@@ -22,7 +22,6 @@ pub struct RealmAccess {
 
 #[derive(Clone)]
 pub struct KeycloakAuth {
-    decoding_key: Arc<DecodingKey>,
     validation: Validation,
 }
 
@@ -40,65 +39,12 @@ struct TokenResponse {
 }
 
 impl KeycloakAuth {
-    pub async fn from_jwk_url(jwk_url: &str, expected_aud: &str) -> Result<Self, Box<dyn std::error::Error>> {
-        let client = Client::new();
-
-        let jwk_url = "http://keycloak_container:8080/realms/master/protocol/openid-connect/certs";
-
-        // ---
-
-        let mut params = HashMap::new();
-        params.insert("grant_type", "password");
-        params.insert("client_id", "admin-cli");
-        params.insert("username", "kc_bootstrap_admin_username");
-        params.insert("password", "kc_bootstrap_admin_password");
-
-        let response = client
-            .post("http://keycloak_container:8080/realms/master/protocol/openid-connect/token")
-            .form(&params)
-            .send()
-            .await?;
-
-        let token_maybe = response
-            .json::<TokenResponse>()
-            .await?;
-
-        println!("token_maybe {:?}", token_maybe);
-
-        let header = decode_header(token_maybe.access_token.clone()).unwrap();
-        println!("Header: {:?}", header);
-
-        // ---
-
-        let jwks: serde_json::Value = client
-            .get(jwk_url)
-            .basic_auth("kc_bootstrap_admin_username", Some("kc_bootstrap_admin_password"))
-            .send().await?.json().await?;
-
-        println!("JWK found: {:?}", jwks);
-
-        // Use the first key from the JWKs (in real use, you should match "kid")
-        let jwk = jwks["keys"].as_array().unwrap().iter().find(|arr| arr.as_object().unwrap().get("kid").unwrap().as_str().unwrap() == header.kid.clone().unwrap()).unwrap();
-
-        let n = jwk["n"].as_str().unwrap();
-        let e = jwk["e"].as_str().unwrap();
-        let decoding_key = Arc::new(DecodingKey::from_rsa_components(n, e)?);
-
+    pub fn new() -> Self {
         let mut validation = Validation::new(Algorithm::RS256);
-        // validation.set_audience(&[expected_aud]);
 
-        let result = Ok(Self {
-            decoding_key: Arc::clone(&decoding_key),
+        Self {
             validation: validation.clone(),
-        });
-
-        println!("decoding...: {:?}", decode::<Claims>(token_maybe.access_token, &decoding_key, &validation)?);
-
-        result
-    }
-
-    fn validate_token(&self, token: &str) -> Result<TokenData<Claims>, JwtError> {
-        decode::<Claims>(token, &self.decoding_key, &self.validation)
+        }
     }
 }
 
@@ -108,10 +54,34 @@ impl Handler for KeycloakAuth {
         let auth_header = req.headers().get("authorization").and_then(|v| v.to_str().ok());
 
         if let Some(auth_header) = auth_header {
-            if let Some(token) = auth_header.strip_prefix("Bearer ") {
-                match self.validate_token(token) {
+            if let Some(access_token) = auth_header.strip_prefix("Bearer ") {
+
+                let realm = req.header::<String>("x-realm").unwrap();
+
+                let client = Client::new();
+
+                let header = decode_header(access_token).unwrap();
+                println!("looking for kid: {:?}", header.kid);
+
+                let jwk_url = format!("http://keycloak_container:8080/realms/{}/protocol/openid-connect/certs", realm);
+
+                let jwks: serde_json::Value = client
+                    .get(jwk_url)
+                    .bearer_auth(access_token)
+                    .send().await.unwrap().json().await.unwrap();
+
+                println!("JWKs found: {:?}", jwks);
+
+                // Use the first key from the JWKs (in real use, you should match "kid")
+                let jwk = jwks["keys"].as_array().unwrap().iter().find(|arr| arr.as_object().unwrap().get("kid").unwrap().as_str().unwrap() == header.kid.clone().unwrap()).unwrap();
+
+                let n = jwk["n"].as_str().unwrap();
+                let e = jwk["e"].as_str().unwrap();
+                let decoding_key = Arc::new(DecodingKey::from_rsa_components(n, e).unwrap());
+
+                match decode::<Claims>(access_token, &decoding_key, &self.validation) {
                     Ok(token_data) => {
-                        req.extensions_mut().insert(token_data.claims);
+                        println!("Token data: {:?}", token_data);
                         return; // Allow request to continue
                     }
                     Err(err) => {
