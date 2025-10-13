@@ -184,22 +184,17 @@ The `access_token` and `id_token` can be decoded using a tool like https://www.j
 
 ```json
 {
-  "exp": 1760317800,
-  "iat": 1760317500,
-  "jti": "onrtro:66c1cd5d-57c4-c35f-104b-726b2bcab29d",
+  "exp": 1760359940,
+  "iat": 1760359640,
+  "jti": "onrtro:e592c0a2-368e-79c2-3c35-026b40dda768",
   "iss": "http://localhost:8989/realms/myrealm",
   "typ": "Bearer",
   "azp": "my-confidential-client",
-  "sid": "55d3cfbb-0594-4a69-b853-83d15c04eec8",
-  "realm_access": {
-    "roles": [
-      "user"
-    ]
-  },
+  "sid": "7e675b31-9841-44e5-b4a4-44ae42bca6ca",
   "resource_access": {
     "my-confidential-client": {
       "roles": [
-        "user"
+        "client-user"
       ]
     }
   },
@@ -215,16 +210,16 @@ while the decoded `id_token` will look something like
 
 ```json
 {
-  "exp": 1760317800,
-  "iat": 1760317500,
-  "jti": "37b086cf-ed1a-b341-fdc9-64cef94572d1",
+  "exp": 1760359940,
+  "iat": 1760359640,
+  "jti": "a0019df9-7370-0e74-c316-a613a6fc9783",
   "iss": "http://localhost:8989/realms/myrealm",
   "aud": "my-confidential-client",
-  "sub": "86277450-41bd-4e59-9bed-df74d904f9a2",
+  "sub": "7f16300f-6063-41ef-9428-ced32ef5adad",
   "typ": "ID",
   "azp": "my-confidential-client",
-  "sid": "55d3cfbb-0594-4a69-b853-83d15c04eec8",
-  "at_hash": "MYCn_sww4JaECpC7UXcX5g",
+  "sid": "7e675b31-9841-44e5-b4a4-44ae42bca6ca",
+  "at_hash": "uHUl9PtVRuABezMMlDfjLQ",
   "name": "Bob User",
   "preferred_username": "bob",
   "given_name": "Bob",
@@ -237,49 +232,118 @@ The ID token answers the question: "who is the user?" (what's their unique ident
 ---
 
 ```json
-  "roles": {
-    "realm": [
-      {
-        "id": "role-id-1",
-        "name": "admin",
-        "description": "realm-export.json-defined admin role"
-      },
-      {
-        "id": "role-id-2",
-        "name": "user",
-        "description": "realm-export.json-defined user role"
-      }
-    ]
-  }
+      "defaultRoles": []
 ```
 
-The above chunk of code defines some roles which can be used to enable / disable functionality and content visibility in the UI for different users.
+Finally, the last line of `"clients"` is this line, which says that users of this client will be given no permissions by default. They must be assigned roles explicitly.
 
 ---
 
 ```json
-  "users": [
+  "roles": {
+```
+
+Here we begin the section where we define roles for the realm and the clients in the realm.
+
+---
+
+```json
+    "realm": [
+      {
+        "id": "role-id-1",
+        "name": "realm-admin",
+        "description": "realm-export.json-defined admin role"
+      },
+      {
+        "id": "role-id-2",
+        "name": "realm-user",
+        "description": "realm-export.json-defined user role"
+      }
+    ],
+```
+
+We define realm-scoped roles, which can apply to clients and to users, regardless of client.
+
+---
+
+```json
+    "client": {
+      "my-confidential-client": [
+        {
+          "name": "client-admin",
+          "description": "client-admin role"
+        },
+        {
+          "name": "client-user",
+          "description": "client-user role"
+        }
+      ]
+    }
+```
+
+Then we define client-specific roles. In this case, these roles are defined for the `"my-confidential-client"` client, and users of that client. These roles are irrelevant to other clients, and users of other clients.
+
+These roles let us enable / disable functionality and content visibility in this client for different users. (For example, if the client is a web app, there might be an Admin page which should only be accessible by users with the `"client-admin"` role.)
+
+---
+
+```json
+  "users": {
+```
+
+Here we begin the section where we define users for the realm and the clients in the realm.
+
+---
+
+```json
     {
-      "username": "admin",
+      "username": "realm-admin",
       "enabled": true,
       "emailVerified": true,
-      "firstName": "Admin",
-      "lastName": "User",
-      "email": "admin@user.com",
+      "firstName": "Realm",
+      "lastName": "Admin",
+      "email": "realm@admin.com",
       "realmRoles": [
-        "admin", "user"
+        "realm-admin", "realm-user"
       ],
       "credentials": [
         {
           "type": "password",
-          "value": "admin",
+          "value": "realm-admin",
           "temporary": false
         }
       ]
     }
 ```
 
-The first predefined user is `"admin"`, which has the `"admin"` and `"user"` roles. `"admin"` uses `"password"` verification, with the password `"admin"`.
+The first predefined user is `"realm-admin"`, which has the `"realm-admin"` and `"realm-user"` roles. The `"realm-admin"` user uses `"password"` verification, with the password `"realm-admin"`. The `"realm-admin"` user has no client-specific roles.
+
+---
+
+```json
+    {
+      "username": "client-admin",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Client",
+      "lastName": "Admin",
+      "email": "client@admin.com",
+      "clientRoles": {
+        "my-confidential-client": [
+          "client-admin", "client-user"
+        ]
+      },
+      "credentials": [
+        {
+          "type": "password",
+          "value": "client-admin",
+          "temporary": false
+        }
+      ]
+    }
+```
+
+Then we have a `"client-admin"` user, which has the `"client-admin"` and `"client-user"` roles. The `"client-admin"` user uses `"password"` verification, with the password `"client-admin"`. The `"client-admin"` user has no realm-specific roles.
 
 ---
 
@@ -291,12 +355,9 @@ The first predefined user is `"admin"`, which has the `"admin"` and `"user"` rol
       "firstName": "Bob",
       "lastName": "User",
       "email": "bob@user.com",
-      "realmRoles": [
-        "user"
-      ],
       "clientRoles": {
         "my-confidential-client": [
-          "user"
+          "client-user"
         ]
       },
       "credentials": [
@@ -309,8 +370,8 @@ The first predefined user is `"admin"`, which has the `"admin"` and `"user"` rol
     }
 ```
 
-Other users are defined to test other app functionality. The users `"bob"` and `"clara"` both have only the `"user"` role.
+Other users are defined to test other app functionality. The users `"bob"` and `"clara"` both have only the `"client-user"` role.
 
-To distinguish between the `"admin"` user and `"bob"` / `"clara"`, we can use the `"roles"` in the `access_token` (see above).
+To distinguish between the `"client-admin"` user and `"bob"` / `"clara"`, we can use the `"roles"` in the `access_token` (see above) -- `"bob"` and `"clara"` will not have the `"client-admin"` role.
 
-To distinguish between `"bob"` and `"clara"`, we can use the `"sub"` field of the `id_token` (see above).
+To distinguish between `"bob"` and `"clara"`, we can use the `"sub"` field of the `id_token` (see above) -- this is a unique ID string (a UUID) which is generated by Keycloak for each user.

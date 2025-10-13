@@ -18,38 +18,71 @@
         "email"
       ],
       "clientAuthenticatorType": "client-secret",
-      "directAccessGrantsEnabled": true
+      "directAccessGrantsEnabled": true,
+      "defaultRoles": []
     }
   ],
   "roles": {
     "realm": [
       {
         "id": "role-id-1",
-        "name": "admin",
+        "name": "realm-admin",
         "description": "realm-export.json-defined admin role"
       },
       {
         "id": "role-id-2",
-        "name": "user",
+        "name": "realm-user",
         "description": "realm-export.json-defined user role"
       }
-    ]
+    ],
+    "client": {
+      "my-confidential-client": [
+        {
+          "name": "client-admin",
+          "description": "client-admin role"
+        },
+        {
+          "name": "client-user",
+          "description": "client-user role"
+        }
+      ]
+    }
   },
   "users": [
     {
-      "username": "admin",
+      "username": "realm-admin",
       "enabled": true,
       "emailVerified": true,
-      "firstName": "Admin",
-      "lastName": "User",
-      "email": "admin@user.com",
+      "firstName": "Realm",
+      "lastName": "Admin",
+      "email": "realm@admin.com",
       "realmRoles": [
-        "admin", "user"
+        "realm-admin", "realm-user"
       ],
       "credentials": [
         {
           "type": "password",
-          "value": "admin",
+          "value": "realm-admin",
+          "temporary": false
+        }
+      ]
+    },
+    {
+      "username": "client-admin",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Client",
+      "lastName": "Admin",
+      "email": "client@admin.com",
+      "clientRoles": {
+        "my-confidential-client": [
+          "client-admin", "client-user"
+        ]
+      },
+      "credentials": [
+        {
+          "type": "password",
+          "value": "client-admin",
           "temporary": false
         }
       ]
@@ -61,12 +94,9 @@
       "firstName": "Bob",
       "lastName": "User",
       "email": "bob@user.com",
-      "realmRoles": [
-        "user"
-      ],
       "clientRoles": {
         "my-confidential-client": [
-          "user"
+          "client-user"
         ]
       },
       "credentials": [
@@ -84,9 +114,11 @@
       "firstName": "Clara",
       "lastName": "User",
       "email": "clara@user.com",
-      "realmRoles": [
-        "user"
-      ],
+      "clientRoles": {
+        "my-confidential-client": [
+          "client-user"
+        ]
+      },
       "credentials": [
         {
           "type": "password",

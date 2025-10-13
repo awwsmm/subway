@@ -91,21 +91,26 @@ async fn main() {
         .push(doc.into_router("/api-doc/openapi.json"))
         .push(SwaggerUi::new("/api-doc/openapi.json").into_router("swagger-ui"));
 
-    let auth = KeycloakAuth::new();
-
-    // Define the protected routes with the Keycloak authentication layer
-    let protected_router = Router::with_path("/protected")
-        .hoop(auth) // Apply the middleware here
-        .get(handlers::misc::protected::protected);
-
     let catcher = Catcher::default().hoop(handlers::misc::not_found::not_found);
 
     println!("Subway is running at http://localhost:7878");
 
     Server::new(acceptor).serve(
-        Service::new(public_router
-            .push(protected_router))
-            .hoop(cors) // Apply the CORS middleware globally
-            .catcher(catcher)
+        Service::new(
+            public_router
+                .hoop(cors) // Apply the CORS middleware globally
+                .push(
+                    // this is an admin-only route
+                    Router::with_path("/admin-only")
+                        .hoop(KeycloakAuth::new(&["client-admin"]))
+                        .get(handlers::misc::admin_only::admin_only)
+                )
+                .push(
+                    // this is a user-only route
+                    Router::with_path("/user-only")
+                        .hoop(KeycloakAuth::new(&["client-user"]))
+                        .get(handlers::misc::user_only::user_only)
+                )
+        ).catcher(catcher)
     ).await;
 }

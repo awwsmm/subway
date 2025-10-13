@@ -70,18 +70,18 @@ Note that when the backend restarts, the database will be wiped; similarly, when
 
 `keycloak/realm-export.json` configures some default users for testing and development.
 
-With the app running, visit http://localhost:5173/login to view the login page, or http://localhost:5173/protected to view a protected page.
+With the app running, visit http://localhost:5173/login to view the login page, or http://localhost:5173/user-only to view a protected page.
 
-Login with the dummy users `admin` (password `admin`), `bob` (password `bob`), or `clara` (password `clara`).
+Login with the dummy users `client-admin` (password `client-admin`), `bob` (password `bob`), or `clara` (password `clara`).
 
 ### protected endpoints
 
-There is a protected endpoint at http://localhost:7878/protected
+There is a protected endpoint at http://localhost:7878/user-only
 
 If you try to access it unauthorized...
 
 ```shell
-curl http://localhost:7878/protected
+curl http://localhost:7878/user-only
 ```
 
 ...you will get a response like
@@ -90,34 +90,56 @@ curl http://localhost:7878/protected
 Missing or malformed Authorization header
 ```
 
-You must first acquire an auth token
+You must first acquire an auth token and an id token
 
 ```shell
-export AUTH_TOKEN=$(curl -d 'client_id=admin-cli' -d 'username=kc_bootstrap_admin_username' -d 'password=kc_bootstrap_admin_password' -d 'grant_type=password' http://localhost:8989/realms/master/protocol/openid-connect/token | jq -r .access_token)
+export KC_UNAME="bob"; export KC_PWD=$KC_UNAME; \
+ eval $(curl -X POST http://localhost:8989/realms/myrealm/protocol/openid-connect/token \
+  -d "client_id=my-confidential-client" \
+  -d "client_secret=my-client-secret" \
+  -d "grant_type=password" \
+  -d "username=$KC_UNAME" \
+  -d "password=$KC_PWD" \
+  -d "scope=openid" | jq -r '"export ATOKEN=\(.access_token) ITOKEN=\(.id_token)"')
 ```
 
 You can then `curl` this endpoint like
 
 ```shell
-curl -H "Authorization: Bearer $AUTH_TOKEN" -H "x-realm: master" http://localhost:7878/protected
+curl -H "x-keycloak-access-token: $ATOKEN" -H "x-keycloak-id-token: $ITOKEN" -H "x-keycloak-realm: myrealm" http://localhost:7878/user-only
 ```
 
 You should receive a response like
 
 ```
-welcome, authenticated user
+welcome, bob!
+```
+
+Similarly, there is an `admin-only` endpoint, which can only be accessed by the `client-admin` user
+
+```shell
+export KC_UNAME="client-admin"; export KC_PWD=$KC_UNAME; \
+ eval $(curl -X POST http://localhost:8989/realms/myrealm/protocol/openid-connect/token \
+  -d "client_id=my-confidential-client" \
+  -d "client_secret=my-client-secret" \
+  -d "grant_type=password" \
+  -d "username=$KC_UNAME" \
+  -d "password=$KC_PWD" \
+  -d "scope=openid" | jq -r '"export ATOKEN=\(.access_token) ITOKEN=\(.id_token)"')
+```
+
+You can then `curl` this endpoint like
+
+```shell
+curl -H "x-keycloak-access-token: $ATOKEN" -H "x-keycloak-id-token: $ITOKEN" -H "x-keycloak-realm: myrealm" http://localhost:7878/admin-only
+```
+
+You should receive a response like
+
+```
+welcome, administrator
 ```
 
 All of this is currently a WIP. It is messy. I am committing it, though, so I don't lose this functionality.
 
 I have only tested this with Docker so far, not with the in-memory Keycloak.
-
-Note that, if you want to use the `admin`, `bob`, or `clara` users, you must specify the `myrealm` realm both when acquiring and using the `AUTH_TOKEN`
-
-```shell
-export AUTH_TOKEN=$(curl -d 'client_id=admin-cli' -d 'username=bob' -d 'password=bob' -d 'grant_type=password' http://localhost:8989/realms/myrealm/protocol/openid-connect/token | jq -r .access_token)
-```
-
-```shell
-curl -H "Authorization: Bearer $ATOKEN" -H "x-realm: myrealm" http://localhost:7878/protected
-```
