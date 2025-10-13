@@ -3,12 +3,22 @@
   "enabled": true,
   "clients": [
     {
-      "clientId": "my-react-client",
-      "rootUrl": "http://localhost:5173",
-      "publicClient": true,
-      "redirectUris": ["http://localhost:5173/*"],
-      "webOrigins": ["+"],
-      "standardFlowEnabled": true
+      "clientId": "my-confidential-client",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "secret": "my-client-secret",
+      "redirectUris": [
+        "http://localhost:8080/*"
+      ],
+      "defaultClientScopes": [
+        "profile", "roles"
+      ],
+      "optionalClientScopes": [
+        "email"
+      ],
+      "clientAuthenticatorType": "client-secret",
+      "directAccessGrantsEnabled": true
     }
   ],
   "roles": {
@@ -16,12 +26,12 @@
       {
         "id": "role-id-1",
         "name": "admin",
-        "description": "Administrator role"
+        "description": "realm-export.json-defined admin role"
       },
       {
         "id": "role-id-2",
         "name": "user",
-        "description": "Standard user role"
+        "description": "realm-export.json-defined user role"
       }
     ]
   },
@@ -54,6 +64,11 @@
       "realmRoles": [
         "user"
       ],
+      "clientRoles": {
+        "my-confidential-client": [
+          "user"
+        ]
+      },
       "credentials": [
         {
           "type": "password",
