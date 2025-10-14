@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from 'react';
-import realKeycloak from "../auth/keycloak.ts";
+import React, {useEffect, useState} from "react";
+import realKeycloak from "../auth/keycloak";
 import fakeKeycloak from "../auth/fakeKeycloak.ts";
 import {Link} from "react-router-dom";
 
-const Protected: React.FC = () => {
+const LoginPage: React.FC = () => {
     const [authenticated, setAuthenticated] = useState(false);
     const [loading, setLoading] = useState(true);
 
@@ -36,8 +36,8 @@ const Protected: React.FC = () => {
 
     return (
         <div>
-            <h1>🔐 Protected Page</h1>
-            <p>Welcome, {keycloak.tokenParsed?.preferred_username}</p>
+            <h1>Welcome, {keycloak.tokenParsed?.preferred_username}!</h1>
+            <p>You are logged in via Keycloak.</p>
             <div>
                 <button onClick={() => keycloak.logout({ redirectUri: window.location.origin })}>
                     Logout
@@ -52,4 +52,4 @@ const Protected: React.FC = () => {
     );
 };
 
-export default Protected;
+export default LoginPage;

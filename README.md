@@ -72,7 +72,7 @@ Note that when the backend restarts, the database will be wiped; similarly, when
 
 With the app running, visit http://localhost:5173/login to view the login page, or http://localhost:5173/user-only to view a protected page.
 
-Login with the dummy users `client-admin` (password `client-admin`), `bob` (password `bob`), or `clara` (password `clara`).
+LoginPage with the dummy users `admin` (password `admin`), `bob` (password `bob`), or `clara` (password `clara`).
 
 ### protected endpoints
 

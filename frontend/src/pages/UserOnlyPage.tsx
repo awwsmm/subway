@@ -1,9 +1,9 @@
-import React, {useEffect, useState} from "react";
-import realKeycloak from "../auth/keycloak";
+import React, {useEffect, useState} from 'react';
+import realKeycloak from "../auth/keycloak.ts";
 import fakeKeycloak from "../auth/fakeKeycloak.ts";
 import {Link} from "react-router-dom";
 
-const Login: React.FC = () => {
+const UserOnlyPage: React.FC = () => {
     const [authenticated, setAuthenticated] = useState(false);
     const [loading, setLoading] = useState(true);
 
@@ -18,6 +18,11 @@ const Login: React.FC = () => {
             keycloak
                 .init({onLoad: "login-required"}) // or "check-sso" if you want silent login
                 .then((auth) => {
+
+                    console.log("keycloak.tokenParsed?.realm_access == " + JSON.stringify(keycloak.tokenParsed?.realm_access));
+
+                    console.log("realm roles == " + JSON.stringify(keycloak.tokenParsed?.realm_access?.roles));
+
                     setAuthenticated(auth);
                     setLoading(false);
                 })
@@ -31,13 +36,24 @@ const Login: React.FC = () => {
     if (loading) return <p>Loading...</p>;
 
     if (!authenticated) {
-        return <p>Unable to authenticate.</p>;
+        return (
+            <div>
+                <div>
+                    <p>Unable to authenticate.</p>
+                </div>
+                <div>
+                    <button>
+                        <Link to="/">Back to Home</Link>
+                    </button>
+                </div>
+            </div>
+        );
     }
 
     return (
         <div>
-            <h1>Welcome, {keycloak.tokenParsed?.preferred_username}!</h1>
-            <p>You are logged in via Keycloak.</p>
+            <h1>🔐 User-Only Page</h1>
+            <p>Welcome, {keycloak.tokenParsed?.preferred_username}</p>
             <div>
                 <button onClick={() => keycloak.logout({ redirectUri: window.location.origin })}>
                     Logout
@@ -52,4 +68,4 @@ const Login: React.FC = () => {
     );
 };
 
-export default Login;
+export default UserOnlyPage;

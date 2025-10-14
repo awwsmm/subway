@@ -9,7 +9,7 @@
       "publicClient": false,
       "secret": "my-client-secret",
       "redirectUris": [
-        "http://localhost:8080/*"
+        "http://localhost:5173/*"
       ],
       "defaultClientScopes": [
         "profile", "roles"
@@ -20,69 +20,52 @@
       "clientAuthenticatorType": "client-secret",
       "directAccessGrantsEnabled": true,
       "defaultRoles": []
+    },
+    {
+      "clientId": "my-public-client",
+      "enabled": true,
+      "publicClient": true,
+      "redirectUris": [
+        "http://localhost:5173/*"
+      ],
+      "defaultClientScopes": [
+        "profile", "roles"
+      ],
+      "optionalClientScopes": [
+        "email"
+      ],
+      "defaultRoles": []
     }
   ],
   "roles": {
     "realm": [
       {
         "id": "role-id-1",
-        "name": "realm-admin",
+        "name": "admin",
         "description": "realm-export.json-defined admin role"
       },
       {
         "id": "role-id-2",
-        "name": "realm-user",
+        "name": "user",
         "description": "realm-export.json-defined user role"
       }
-    ],
-    "client": {
-      "my-confidential-client": [
-        {
-          "name": "client-admin",
-          "description": "client-admin role"
-        },
-        {
-          "name": "client-user",
-          "description": "client-user role"
-        }
-      ]
-    }
+    ]
   },
   "users": [
     {
-      "username": "realm-admin",
+      "username": "admin",
       "enabled": true,
       "emailVerified": true,
-      "firstName": "Realm",
-      "lastName": "Admin",
-      "email": "realm@admin.com",
+      "firstName": "Admin",
+      "lastName": "User",
+      "email": "admin@user.com",
       "realmRoles": [
-        "realm-admin", "realm-user"
+        "admin", "user"
       ],
       "credentials": [
         {
           "type": "password",
-          "value": "realm-admin",
-          "temporary": false
-        }
-      ]
-    },
-    {
-      "username": "client-admin",
-      "enabled": true,
-      "emailVerified": true,
-      "firstName": "Client",
-      "lastName": "Admin",
-      "email": "client@admin.com",
-      "clientRoles": {
-        "my-confidential-client": [
-          "client-admin", "client-user"
-        ]
-      },
-      "credentials": [
-        {
-          "type": "password",
-          "value": "client-admin",
+          "value": "admin",
           "temporary": false
         }
       ]
@@ -94,11 +77,9 @@
       "firstName": "Bob",
       "lastName": "User",
       "email": "bob@user.com",
-      "clientRoles": {
-        "my-confidential-client": [
-          "client-user"
-        ]
-      },
+      "realmRoles": [
+        "user"
+      ],
       "credentials": [
         {
           "type": "password",
@@ -114,11 +95,9 @@
       "firstName": "Clara",
       "lastName": "User",
       "email": "clara@user.com",
-      "clientRoles": {
-        "my-confidential-client": [
-          "client-user"
-        ]
-      },
+      "realmRoles": [
+        "user"
+      ],
       "credentials": [
         {
           "type": "password",

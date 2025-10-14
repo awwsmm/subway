@@ -68,9 +68,16 @@ function Home() {
                 </div>
             }
             <div>
-                <Link to={'/protected'}>
+                <Link to={'/user-only'}>
                     <button>
-                        Protected Page (logged-in users only)
+                        User-Only Page
+                    </button>
+                </Link>
+            </div>
+            <div>
+                <Link to={'/admin-only'}>
+                    <button>
+                        Admin-Only Page
                     </button>
                 </Link>
             </div>

@@ -1,16 +1,18 @@
 import './App.css'
-import Login from "./pages/Login.tsx";
-import Protected from "./pages/Protected.tsx";
+import LoginPage from "./pages/LoginPage.tsx";
+import AdminOnlyPage from "./pages/AdminOnlyPage.tsx";
 import {BrowserRouter, Route, Routes} from "react-router-dom";
-import Home from "./pages/Home.tsx";
+import HomePage from "./pages/HomePage.tsx";
+import UserOnlyPage from "./pages/UserOnlyPage.tsx";
 
 function App() {
     return (
         <BrowserRouter>
             <Routes>
-                <Route path="/" element={<Home />} />
-                <Route path="/login" element={<Login />} />
-                <Route path="/protected" element={<Protected />} />
+                <Route path="/" element={<HomePage />} />
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/admin-only" element={<AdminOnlyPage />} />
+                <Route path="/user-only" element={<UserOnlyPage />} />
             </Routes>
         </BrowserRouter>
     );
