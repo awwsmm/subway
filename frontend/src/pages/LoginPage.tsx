@@ -1,33 +1,8 @@
 import React, {useContext, useState} from "react";
-// import realKeycloak from "../auth/keycloak";
-// import fakeKeycloak from "../auth/fakeKeycloak.ts";
 import {Link} from "react-router-dom";
-import {AuthContextInMemory} from "../auth/AuthContextInMemory.tsx";
+import {AuthContext} from "../auth/AuthContext.tsx";
 
 const LoginPage: React.FC = () => {
-    // const [authenticated, setAuthenticated] = useState(false);
-    // const [loading, setLoading] = useState(true);
-
-    // const useRealAuth = import.meta.env.VITE_SUBWAY_AUTH_MODE === 'docker';
-    // const keycloak = useRealAuth ? realKeycloak : fakeKeycloak;
-
-    // useEffect(() => {
-    //     if (keycloak.authenticated) {
-    //         setAuthenticated(true);
-    //         setLoading(false);
-    //     } else {
-    //         keycloak
-    //             .init({onLoad: "login-required"}) // or "check-sso" if you want silent login
-    //             .then((auth) => {
-    //                 setAuthenticated(auth);
-    //                 setLoading(false);
-    //             })
-    //             .catch((err) => {
-    //                 console.error("Keycloak init error:", err);
-    //                 setLoading(false);
-    //             });
-    //     }
-    // }, []);
 
     const [loggingOut, setLoggingOut] = useState(false);
 
@@ -37,16 +12,7 @@ const LoginPage: React.FC = () => {
         return null;
     }
 
-    const authContext = useContext(AuthContextInMemory);
-
-    // authContext?.init();
-
-
-    // if (loading) return <p>Loading...</p>;
-    //
-    // if (!authenticated) {
-    //     return <p>Unable to authenticate.</p>;
-    // }
+    const authContext = useContext(AuthContext);
 
     if (!authContext?.loggedIn()) {
         return (

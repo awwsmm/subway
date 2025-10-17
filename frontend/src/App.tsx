@@ -4,12 +4,12 @@ import AdminOnlyPage from "./pages/AdminOnlyPage.tsx";
 import {BrowserRouter, Route, Routes} from "react-router-dom";
 import HomePage from "./pages/HomePage.tsx";
 import UserOnlyPage from "./pages/UserOnlyPage.tsx";
-import {AuthContextInMemoryProvider} from "./auth/AuthContextInMemory.tsx";
 import ProtectedRoute from "./auth/ProtectedRoute.tsx";
+import {AuthContextProvider} from "./auth/AuthContext.tsx";
 
 function App() {
     return (
-        <AuthContextInMemoryProvider>
+        <AuthContextProvider implementation={import.meta.env.VITE_SUBWAY_AUTH_MODE}>
             <BrowserRouter>
                 <Routes>
                     <Route path="/" element={<HomePage />} />
@@ -22,7 +22,7 @@ function App() {
                     </Route>
                 </Routes>
             </BrowserRouter>
-        </AuthContextInMemoryProvider>
+        </AuthContextProvider>
     );
 }
 

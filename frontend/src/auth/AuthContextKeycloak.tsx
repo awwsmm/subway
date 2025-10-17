@@ -1,8 +1,14 @@
+import Keycloak from "keycloak-js";
 import React, {useEffect, useState} from "react";
-import realmExport from "../../../keycloak/realm-export.json";
 import {AuthContext} from "./AuthContext.tsx";
 
-export const AuthContextInMemoryProvider = ({ children }: { children: React.ReactNode }) => {
+const _keycloak = new Keycloak({
+    url: "http://localhost:8989",
+    realm: "myrealm",
+    clientId: "my-public-client",
+});
+
+export const AuthContextKeycloakProvider = ({ children }: { children: React.ReactNode }) => {
 
     const [user, setUser] = useState(() => {
         const maybeUser = sessionStorage.getItem('subway-user');
@@ -34,9 +40,17 @@ export const AuthContextInMemoryProvider = ({ children }: { children: React.Reac
             // do nothing
 
         } else {
-            if (realmExport) {
-                setInitialized(true);
-            }
+            _keycloak
+                .init({
+                    onLoad: "check-sso",
+                    silentCheckSsoRedirectUri: window.location.origin + '/silent-check-sso.html',
+                })
+                .then(() => {
+                    setInitialized(true);
+                })
+                .catch((err) => {
+                    console.error("Keycloak init error:", err);
+                })
         }
     }
 
@@ -51,19 +65,21 @@ export const AuthContextInMemoryProvider = ({ children }: { children: React.Reac
         } else {
             init();
 
-            const users = realmExport.users.map(each => each.username);
-            const username = prompt(`Enter username to login (e.g., ${users.join(", ")}):`);
+            void _keycloak.login();
+            setUser(_keycloak.tokenParsed?.preferred_username || "<unknown>");
 
-            if (username && users.includes(username)) {
-                setUser(username);
-
-            } else {
-                alert('Invalid user. Staying logged out.');
-            }
+            // const username = prompt(`Enter username to login (e.g., ${users.join(", ")}):`);
+            // if (username && users.includes(username)) {
+            //     setUser(username);
+            //
+            // } else {
+            //     alert('Invalid user. Staying logged out.');
+            // }
         }
     }
 
     const logout = (redirectUri: string) => {
+        void _keycloak.logout();
         setUser(undefined);
         window.location.href = redirectUri;
     }
@@ -73,8 +89,12 @@ export const AuthContextInMemoryProvider = ({ children }: { children: React.Reac
     }
 
     const hasRole = (roles: string[]) => {
-        const userRoles = realmExport.users.find(user => user.username === username())?.realmRoles
+
+        const userRoles = _keycloak.tokenParsed?.realm_access?.roles || [];
         return (userRoles && userRoles.some(role => roles.includes(role))) || false;
+
+        // const userRoles = realmExport.users.find(user => user.username === username())?.realmRoles
+        // return (userRoles && userRoles.some(role => roles.includes(role))) || false;
     }
 
     return (

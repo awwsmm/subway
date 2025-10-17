@@ -1,7 +1,7 @@
 import {useContext} from 'react'
 import './Home.css'
-import {AuthContextInMemory} from "../auth/AuthContextInMemory.tsx";
 import {Link} from "react-router-dom";
+import {AuthContext} from "../auth/AuthContext.tsx";
 // import realKeycloak from "../auth/keycloak.ts";
 // import fakeKeycloak from "../auth/fakeKeycloak.ts";
 
@@ -29,11 +29,6 @@ import {Link} from "react-router-dom";
 
 function Home() {
 
-    // console.log(`VITE_SUBWAY_AUTH_MODE == ${import.meta.env.VITE_SUBWAY_AUTH_MODE}`)
-
-    // const useRealAuth = import.meta.env.VITE_SUBWAY_AUTH_MODE === 'docker';
-    // const keycloak = useRealAuth ? realKeycloak : fakeKeycloak;
-
     // const [isLoading, setIsLoading] = useState(false);
     // const [data, setData] = useState<Post[]>([]);
 
@@ -48,7 +43,7 @@ function Home() {
     //     }
     // };
 
-    const authContext = useContext(AuthContextInMemory);
+    const authContext = useContext(AuthContext);
 
     const username: string | undefined = authContext?.username();
 

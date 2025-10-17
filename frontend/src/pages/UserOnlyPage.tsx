@@ -1,10 +1,10 @@
 import React, {useContext, useState} from 'react';
 import {Link} from "react-router-dom";
-import {AuthContextInMemory} from "../auth/AuthContextInMemory.tsx";
+import {AuthContext} from "../auth/AuthContext.tsx";
 
 const UserOnlyPage: React.FC = () => {
 
-    const authContext = useContext(AuthContextInMemory);
+    const authContext = useContext(AuthContext);
 
     const username = authContext?.username();
 

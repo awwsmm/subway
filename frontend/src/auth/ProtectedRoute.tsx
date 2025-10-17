@@ -1,15 +1,14 @@
 import React, {useContext} from "react";
 import {Link, Outlet} from "react-router-dom";
-import {AuthContextInMemory} from "./AuthContextInMemory.tsx";
+import {AuthContext} from "./AuthContext.tsx";
 
-// 1. Define an interface for the component's props
 interface ProtectedRouteProps {
     roles: string[];
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = (props: ProtectedRouteProps) => {
 
-    const authContext = useContext(AuthContextInMemory);
+    const authContext = useContext(AuthContext);
 
     const authorized = authContext?.hasRole(props.roles);
 
