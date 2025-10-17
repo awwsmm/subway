@@ -79,20 +79,20 @@ function Home() {
                     </Link>
                 </div>
             }
-            {/*<div>*/}
-            {/*    <Link to={'/user-only'}>*/}
-            {/*        <button>*/}
-            {/*            User-Only Page*/}
-            {/*        </button>*/}
-            {/*    </Link>*/}
-            {/*</div>*/}
-            {/*<div>*/}
-            {/*    <Link to={'/admin-only'}>*/}
-            {/*        <button>*/}
-            {/*            Admin-Only Page*/}
-            {/*        </button>*/}
-            {/*    </Link>*/}
-            {/*</div>*/}
+            <div>
+                <Link to={'/user-only'}>
+                    <button>
+                        User-Only Page
+                    </button>
+                </Link>
+            </div>
+            <div>
+                <Link to={'/admin-only'}>
+                    <button>
+                        Admin-Only Page
+                    </button>
+                </Link>
+            </div>
             <p>Welcome{username ? `, ${username}` : '' }!</p>
             <h1>Vite + React</h1>
             {/*<div className="card">*/}
