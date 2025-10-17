@@ -50,8 +50,6 @@ function Home() {
 
     const authContext = useContext(AuthContextInMemory);
 
-    // authContext?.init();
-
     const username: string | undefined = authContext?.username();
 
     return (

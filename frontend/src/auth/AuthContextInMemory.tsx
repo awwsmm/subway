@@ -1,5 +1,6 @@
 import React, {createContext, useEffect, useState} from "react";
 import type AuthContext from "./AuthContext.ts";
+import realmExport from "../../../keycloak/realm-export.json";
 
 export const AuthContextInMemory = createContext<AuthContext | undefined>(undefined);
 
@@ -7,57 +8,86 @@ export const AuthContextInMemoryProvider = ({ children }: { children: React.Reac
     const users = ["admin", "bob", "clara"];
 
     const [user, setUser] = useState(() => {
-        const savedData = sessionStorage.getItem('myAppStateKey');
-        return savedData && savedData !== "" ? JSON.parse(savedData) : undefined;
+        const maybeUser = sessionStorage.getItem('subway-user');
+        return maybeUser || undefined;
     });
 
     // Use useEffect to save state to sessionStorage whenever 'user' changes
     useEffect(() => {
-        sessionStorage.setItem('myAppStateKey', user ? JSON.stringify(user) : "");
+        if (user) {
+            sessionStorage.setItem('subway-user', user);
+        } else {
+            sessionStorage.removeItem('subway-user');
+        }
     }, [user]); // Dependency array: effect runs when 'user' changes
 
+    const [initialized, setInitialized] = useState(() => {
+        const initialized = sessionStorage.getItem('subway-initialized');
+        return initialized ? JSON.parse(initialized) : false;
+    });
+
+    // Use useEffect to save state to sessionStorage whenever 'initialized' changes
+    useEffect(() => {
+        sessionStorage.setItem('subway-initialized', JSON.stringify(initialized));
+    }, [initialized]); // Dependency array: effect runs when 'initialized' changes
+
+    // init() is called during login()
     const init = () => {
-        // in-memory init() does nothing
+        if (initialized) {
+            // do nothing
+
+        } else {
+            if (realmExport) {
+                setInitialized(true);
+            }
+
+            // alert(JSON.stringify(realmExport.users.map(each => {
+            //     return {
+            //         username: each.username,
+            //         firstName: each.firstName,
+            //         realmRoles: each.realmRoles,
+            //     }
+            // })));
+        }
     }
 
     const loggedIn = () => {
-        console.log(`loggedIn called -- user = ${user}`);
         return !!user;
     }
 
     const login = () => {
-        console.log(`login called -- user = ${user}`);
-        if (user) {
-            return true
+        if (loggedIn()) {
+            // do nothing
 
         } else {
+            init();
+
             const username = prompt(`Enter username to login (e.g., ${users.join(", ")}):`);
             if (username && users.includes(username)) {
                 setUser(username);
-                return true
 
             } else {
                 alert('Invalid user. Staying logged out.');
-                return false
             }
         }
     }
 
     const logout = (redirectUri: string) => {
-        window.location.href = redirectUri;
         setUser(undefined);
+        window.location.href = redirectUri;
     }
 
     const username = () => {
         return user
     }
 
-    const hasRole = () => {
-        return true;
+    const hasRole = (roles: string[]) => {
+        const userRoles = realmExport.users.find(user => user.username === username())?.realmRoles
+        return (userRoles && userRoles.some(role => roles.includes(role))) || false;
     }
 
     return (
-        <AuthContextInMemory value={{ init, loggedIn, login, logout, username, hasRole }}>
+        <AuthContextInMemory value={{ loggedIn, login, logout, username, hasRole }}>
             {children}
         </AuthContextInMemory>
     );
