@@ -5,7 +5,6 @@ import realmExport from "../../../keycloak/realm-export.json";
 export const AuthContextInMemory = createContext<AuthContext | undefined>(undefined);
 
 export const AuthContextInMemoryProvider = ({ children }: { children: React.ReactNode }) => {
-    const users = ["admin", "bob", "clara"];
 
     const [user, setUser] = useState(() => {
         const maybeUser = sessionStorage.getItem('subway-user');
@@ -40,14 +39,6 @@ export const AuthContextInMemoryProvider = ({ children }: { children: React.Reac
             if (realmExport) {
                 setInitialized(true);
             }
-
-            // alert(JSON.stringify(realmExport.users.map(each => {
-            //     return {
-            //         username: each.username,
-            //         firstName: each.firstName,
-            //         realmRoles: each.realmRoles,
-            //     }
-            // })));
         }
     }
 
@@ -62,7 +53,9 @@ export const AuthContextInMemoryProvider = ({ children }: { children: React.Reac
         } else {
             init();
 
+            const users = realmExport.users.map(each => each.username);
             const username = prompt(`Enter username to login (e.g., ${users.join(", ")}):`);
+
             if (username && users.includes(username)) {
                 setUser(username);
 
