@@ -1,16 +1,17 @@
 # Step 1: Build the app
 FROM node:24.8.0-alpine AS builder
 
-WORKDIR /app
+WORKDIR /app/frontend
 
 # Copy dependencies
-COPY package.json package-lock.json* ./
+COPY ./frontend/package.json ./frontend/package-lock.json* ./
 
 # Install dependencies
 RUN npm ci
 
 # Copy source files, including .env.container, which is used to configure 'npm run build'
-COPY . .
+COPY ./frontend .
+COPY ./keycloak/realm-export.json ../keycloak/
 
 # Build the project, using .env.container, rather than .env.local
 #
@@ -30,10 +31,11 @@ FROM node:24.8.0-alpine AS runner
 # Install a static file server
 RUN npm install -g serve
 
-WORKDIR /app
+WORKDIR /app/frontend
 
 # Copy built files from builder
-COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/frontend/dist ./dist
+COPY --from=builder /app/keycloak/realm-export.json ../keycloak/
 
 # Expose port
 EXPOSE 5173

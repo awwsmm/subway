@@ -21,7 +21,7 @@ To run the full-stack application, you must first build both the `frontend` and 
 Note that building the application in this way (with Docker) requires an Internet connection.
 
 ```shell
-cd frontend && docker build -t subway-frontend . ; cd ..
+docker build -t subway-frontend -f frontend/Dockerfile .
 ```
 
 ```shell
