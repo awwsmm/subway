@@ -4,44 +4,49 @@ import {AuthContext} from "./AuthContext.tsx";
 
 export const AuthContextInMemoryProvider = ({ children }: { children: React.ReactNode }) => {
 
-    const [user, setUser] = useState(() => {
-        const maybeUser = sessionStorage.getItem('subway-user');
-        return maybeUser || undefined;
-    });
+    // This in-memory AuthContext implementation saves its info in session storage / external files (realm-export.json),
+    // to persist across refreshes.
+    // If the tab / window is closed and the app is reopened in another tab / window, that info will be lost.
+    // For an implementation which persists across tab / window close-and-reopens, see AuthContextKeycloak.
 
-    // Use useEffect to save state to sessionStorage whenever 'user' changes
+    // default 'username' value is pulled from session storage
+    const [_username, set_username] = useState(sessionStorage.getItem('subway_username') || undefined);
+
+    // whenever set_username() is called, update 'username' in session storage
     useEffect(() => {
-        if (user) {
-            sessionStorage.setItem('subway-user', user);
+        if (_username) {
+            sessionStorage.setItem('subway_username', _username);
         } else {
-            sessionStorage.removeItem('subway-user');
+            sessionStorage.removeItem('subway_username');
         }
-    }, [user]); // Dependency array: effect runs when 'user' changes
+    }, [_username]); // run this effect when any of these values change
 
-    const [initialized, setInitialized] = useState(() => {
-        const initialized = sessionStorage.getItem('subway-initialized');
+    // default 'initialized' value is pulled from session storage
+    const [_initialized, set_initialized] = useState(() => {
+        const initialized = sessionStorage.getItem('subway_initialized');
         return initialized ? JSON.parse(initialized) : false;
     });
 
-    // Use useEffect to save state to sessionStorage whenever 'initialized' changes
+    // whenever set_initialized() is called, update 'initialized' in session storage
     useEffect(() => {
-        sessionStorage.setItem('subway-initialized', JSON.stringify(initialized));
-    }, [initialized]); // Dependency array: effect runs when 'initialized' changes
+        sessionStorage.setItem('subway_initialized', JSON.stringify(_initialized));
+    }, [_initialized]); // run this effect when any of these values change
 
     // init() is called during login()
     const init = () => {
-        if (initialized) {
+        if (_initialized) {
             // do nothing
 
         } else {
             if (realmExport) {
-                setInitialized(true);
+                set_initialized(true);
             }
         }
     }
 
+    // the user is logged in if we know their username
     const loggedIn = () => {
-        return !!user;
+        return !!username();
     }
 
     const login = () => {
@@ -55,7 +60,7 @@ export const AuthContextInMemoryProvider = ({ children }: { children: React.Reac
             const username = prompt(`Enter username to login (e.g., ${users.join(", ")}):`);
 
             if (username && users.includes(username)) {
-                setUser(username);
+                set_username(username);
 
             } else {
                 alert('Invalid user. Staying logged out.');
@@ -64,14 +69,16 @@ export const AuthContextInMemoryProvider = ({ children }: { children: React.Reac
     }
 
     const logout = (redirectUri: string) => {
-        setUser(undefined);
+        set_username(undefined);
         window.location.href = redirectUri;
     }
 
+    // pull this info from session storage
     const username = () => {
-        return user
+        return _username;
     }
 
+    // pull this info directly from realm-export.json (this could also be refactored to use session storage, if desired)
     const hasRole = (roles: string[]) => {
         const userRoles = realmExport.users.find(user => user.username === username())?.realmRoles
         return (userRoles && userRoles.some(role => roles.includes(role))) || false;

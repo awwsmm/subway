@@ -21,10 +21,10 @@ export const AuthContextKeycloakProvider = ({ children }: { children: React.Reac
     // If the user did not log in, closes the tab, and opens a new one, "check-sso" allows unauthenticated access, as
     // well -- it does not redirect the user to a login page.
 
-    // default 'user' value is pulled from session storage
+    // default 'username' value is pulled from session storage
     const [_username, set_username] = useState(sessionStorage.getItem('subway_username') || undefined);
 
-    // whenever setUser() is called, update 'user' in session storage
+    // whenever set_username() is called, update 'username' in session storage
     useEffect(() => {
         if (_username) {
             sessionStorage.setItem('subway_username', _username);
