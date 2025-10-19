@@ -2,7 +2,6 @@ use jsonwebtoken::{decode, decode_header, Algorithm, DecodingKey, Validation};
 use reqwest::Client;
 use salvo::prelude::*;
 use serde::Deserialize;
-use std::collections::HashMap;
 use std::sync::Arc;
 
 #[derive(Debug, Deserialize, Clone)]
@@ -13,19 +12,17 @@ struct Roles {
 // example decoded access_token
 //
 // {
-//   "exp": 1760359940,
-//   "iat": 1760359640,
-//   "jti": "onrtro:e592c0a2-368e-79c2-3c35-026b40dda768",
+//   "exp": 1760906329,
+//   "iat": 1760906029,
+//   "jti": "onrtro:61b2bdd0-d403-9f89-5e99-cea205794395",
 //   "iss": "http://localhost:8989/realms/myrealm",
 //   "typ": "Bearer",
 //   "azp": "my-confidential-client",
-//   "sid": "7e675b31-9841-44e5-b4a4-44ae42bca6ca",
-//   "resource_access": {
-//     "my-confidential-client": {
-//       "roles": [
-//         "client-user"
-//       ]
-//     }
+//   "sid": "652809cd-9f35-492e-b358-f040bf4dd3b1",
+//   "realm_access": {
+//     "roles": [
+//       "user"
+//     ]
 //   },
 //   "scope": "openid profile",
 //   "name": "Bob User",
@@ -38,7 +35,7 @@ struct AccessToken {
     exp: usize, // expiry time (UNIX timestamp)
     iss: String, // the issuer of the token, should be: http://localhost:8989/realms/myrealm
     azp: String, // authorized party (the client / app acting on behalf of the user), should be: my-confidential-client
-    resource_access: HashMap<String, Roles>, // map of client names to lists of roles
+    realm_access: Roles, // list of roles in the realm
     preferred_username: String, // the user's (mutable) username
 }
 
@@ -147,7 +144,7 @@ impl Handler for KeycloakAuth {
                     println!("access token data: {:?}", access_token_data);
                     println!("id token data: {:?}", maybe_id_data);
 
-                    if access_token_data.claims.resource_access.get(client).map(|roles| roles.roles.iter().any(|role| self.roles.contains(&role))).unwrap_or(false) {
+                    if access_token_data.claims.realm_access.roles.iter().any(|role| self.roles.contains(&role)) {
 
                         // TODO here we should add the roles, "sub", "preferred_username", etc. to the Depot
                         depot.insert("username", access_token_data.claims.preferred_username);

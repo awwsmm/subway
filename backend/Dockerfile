@@ -7,7 +7,7 @@ FROM rust:1.88.0 AS builder
 WORKDIR /usr/src/app
 
 # Copy the Cargo.toml and Cargo.lock files
-COPY Cargo.toml Cargo.lock ./
+COPY ./backend/Cargo.toml ./backend/Cargo.lock ./
 
 # Create an empty src directory to trick Cargo into thinking it's a valid Rust project
 RUN mkdir src && echo "fn main() {}" > src/main.rs
@@ -16,10 +16,10 @@ RUN mkdir src && echo "fn main() {}" > src/main.rs
 RUN cargo build --release
 
 # Now copy the source code
-COPY ./src ./src
+COPY ./backend/src ./src
 
 # ...and the DB migration code
-COPY ./migrations ./migrations
+COPY ./backend/migrations ./migrations
 
 # Build the application
 RUN cargo build --release
@@ -28,13 +28,13 @@ RUN cargo build --release
 FROM debian:12.11-slim
 
 # Set the working directory
-WORKDIR /usr/src/app
+WORKDIR /app/backend
 
 # Copy the built binary from the previous stage
 COPY --from=builder /usr/src/app/target/release/subway-backend ./
 
 # Now copy the resources
-COPY ./resources ./resources
+COPY ./backend/resources ./resources
 
 # Expose the port
 # TODO define this in an env var which is read by this Dockerfile and also by main.rs

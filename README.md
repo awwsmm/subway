@@ -12,6 +12,10 @@ Contains the TypeScript / React / Vite frontend.
 
 To run the frontend by itself, see [frontend/README.md](frontend/README.md).
 
+## `keycloak/`
+
+Contains [Keycloak](https://www.keycloak.org/) configuration (for user authentication and authorization).
+
 ## fullstack development
 
 ### Containerized
@@ -25,7 +29,7 @@ docker build -t subway-frontend -f frontend/Dockerfile .
 ```
 
 ```shell
-cd backend && docker build -t subway-backend . ; cd ..
+docker build -t subway-backend -f backend/Dockerfile .
 ```
 
 then, you can run the full stack with `docker-compose`
@@ -62,7 +66,7 @@ Then visit http://localhost:5173 in the browser.
 
 In _hot reloading_ mode, you never need to re-build or re-run either the frontend or the backend. Simply save your changes and `bacon` / `npm` will automatically restart the backend / frontend, respectively.
 
-Note that when the backend restarts, the database will be wiped; similarly, when the frontend restarts, you will need to re-authenticate as your dummy user of choice.
+Note that when the backend restarts, the database will be wiped; similarly, when the frontend restarts (or you close the tab / window), you will need to re-authenticate as your dummy user of choice.
 
 ## `keycloak`
 
@@ -76,6 +80,8 @@ LoginPage with the dummy users `admin` (password `admin`), `bob` (password `bob`
 
 ### protected endpoints
 
+> Note: this currently only works for [containerized](#containerized) development.
+
 There is a protected endpoint at http://localhost:7878/user-only
 
 If you try to access it unauthorized...
@@ -87,10 +93,10 @@ curl http://localhost:7878/user-only
 ...you will get a response like
 
 ```
-Missing or malformed Authorization header
+Missing or malformed keycloak_access_token header
 ```
 
-You must first acquire an auth token and an id token
+You must first acquire an auth token and an id token from Keycloak (which must also be running)
 
 ```shell
 export KC_UNAME="bob"; export KC_PWD=$KC_UNAME; \
@@ -115,10 +121,10 @@ You should receive a response like
 welcome, bob!
 ```
 
-Similarly, there is an `admin-only` endpoint, which can only be accessed by the `client-admin` user
+Similarly, there is an `admin-only` endpoint, which can only be accessed by the `admin` user
 
 ```shell
-export KC_UNAME="client-admin"; export KC_PWD=$KC_UNAME; \
+export KC_UNAME="admin"; export KC_PWD=$KC_UNAME; \
  eval $(curl -X POST http://localhost:8989/realms/myrealm/protocol/openid-connect/token \
   -d "client_id=my-confidential-client" \
   -d "client_secret=my-client-secret" \
@@ -139,7 +145,3 @@ You should receive a response like
 ```
 welcome, administrator
 ```
-
-All of this is currently a WIP. It is messy. I am committing it, though, so I don't lose this functionality.
-
-I have only tested this with Docker so far, not with the in-memory Keycloak.

@@ -102,13 +102,13 @@ async fn main() {
                 .push(
                     // this is an admin-only route
                     Router::with_path("/admin-only")
-                        .hoop(KeycloakAuth::new(&["client-admin"]))
+                        .hoop(KeycloakAuth::new(&["admin"]))
                         .get(handlers::misc::admin_only::admin_only)
                 )
                 .push(
                     // this is a user-only route
                     Router::with_path("/user-only")
-                        .hoop(KeycloakAuth::new(&["client-user"]))
+                        .hoop(KeycloakAuth::new(&["user"]))
                         .get(handlers::misc::user_only::user_only)
                 )
         ).catcher(catcher)
