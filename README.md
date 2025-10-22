@@ -20,7 +20,7 @@ Contains [Keycloak](https://www.keycloak.org/) configuration (for user authentic
 
 ### Containerized
 
-To run the full-stack application, you must first build both the `frontend` and the `backend` Docker container images.
+To run the full-stack application, you must first build the `frontend`, `backend`, and `keycloak` Docker container images.
 
 Note that building the application in this way (with Docker) requires an Internet connection.
 
@@ -30,6 +30,10 @@ docker build -t subway-frontend -f frontend/Dockerfile .
 
 ```shell
 docker build -t subway-backend -f backend/Dockerfile .
+```
+
+```shell
+docker build -t subway-keycloak -f keycloak/Dockerfile .
 ```
 
 then, you can run the full stack with `docker-compose`

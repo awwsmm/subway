@@ -18,16 +18,16 @@ services:
       retries: 5
 
   # TODO not prod-ready
-  keycloak_container:
-    image: quay.io/keycloak/keycloak:26.3.4-0
-    container_name: keycloak
+  subway-keycloak:
+    image: subway-keycloak
+    container_name: subway-keycloak
     restart: unless-stopped
     ports:
       - "8989:8080" # TODO not prod-ready
     environment:
       KC_BOOTSTRAP_ADMIN_USERNAME: kc_bootstrap_admin_username # use this to log in at localhost:8989
       KC_BOOTSTRAP_ADMIN_PASSWORD: kc_bootstrap_admin_password # use this to log in at localhost:8989
-    command: start-dev --import-realm # TODO development node, not prod-ready
+    command: --import-realm # TODO development node, not prod-ready
     volumes:
       - ./keycloak/realm-export.json:/opt/keycloak/data/import/realm-export.json
 
@@ -42,8 +42,8 @@ services:
     depends_on:
       db_container:
         condition: service_healthy
-      keycloak_container:
-        condition: service_started # TODO not prod-ready, create custom keycloak container with healthcheck
+      subway-keycloak:
+        condition: service_healthy # TODO not prod-ready, create custom keycloak container with healthcheck
 
   subway-frontend:
     image: subway-frontend
