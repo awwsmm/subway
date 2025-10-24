@@ -82,6 +82,7 @@ async fn main() {
         .push(Router::with_path("authors").post(handlers::authors::post::many))
         .push(Router::with_path("authors").get(handlers::authors::get::many))
         .push(Router::with_path("authors/{id}").get(handlers::authors::get::one))
+        .push(Router::with_path("health").get(handlers::health::check))
         ;
 
     // TODO consider replacing env!("CARGO_PKG_VERSION") with clap's crate_version macro

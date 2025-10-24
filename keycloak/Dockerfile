@@ -39,7 +39,7 @@ EXPOSE 8080
 # response=$(cat <&3)             -- save the output of file descriptor 3 to a variable called 'response'
 # exec 3>&-                       -- closes the file descriptor
 # echo "$response" | grep -q ...  -- looks for the string '"status": "UP"' in the output, returns 1 (fails) if not found
-HEALTHCHECK CMD bash -c '\
+HEALTHCHECK --interval=1s --retries=120 CMD bash -c '\
   exec 3<>/dev/tcp/127.0.0.1/9000 && \
   echo -e "GET /health/ready HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n" >&3 && \
   response=$(cat <&3); \

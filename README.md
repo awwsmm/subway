@@ -1,5 +1,11 @@
 # subway
 
+This app consists of four main components
+- a database (Postgres)
+- a backend (written in Rust)
+- a frontend (written in TypeScript)
+- an auth service (Keycloak)
+
 ## `backend/`
 
 Contains the Rust / Salvo / Diesel backend.

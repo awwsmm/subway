@@ -32,9 +32,9 @@ struct Roles {
 // }
 #[derive(Debug, Deserialize, Clone)]
 struct AccessToken {
-    exp: usize, // expiry time (UNIX timestamp)
-    iss: String, // the issuer of the token, should be: http://localhost:8989/realms/myrealm
-    azp: String, // authorized party (the client / app acting on behalf of the user), should be: my-confidential-client
+    // exp: usize, // expiry time (UNIX timestamp)
+    // iss: String, // the issuer of the token, should be: http://localhost:8989/realms/myrealm
+    // azp: String, // authorized party (the client / app acting on behalf of the user), should be: my-confidential-client
     realm_access: Roles, // list of roles in the realm
     preferred_username: String, // the user's (mutable) username
 }
@@ -59,12 +59,12 @@ struct AccessToken {
 // }
 #[derive(Debug, Deserialize, Clone)]
 pub struct IdToken {
-    exp: usize, // expiry time (UNIX timestamp)
-    iss: String, // the issuer of the token, should be: http://localhost:8989/realms/myrealm
-    aud: String, // audience (the client / app acting on behalf of the user), should be: my-confidential-client
-    sub: String, // the subject of the token (whom the token refers to), the user's UUID
-    azp: String, // authorized party (the client / app acting on behalf of the user), should be: my-confidential-client
-    preferred_username: String, // the user's (mutable) username
+    // exp: usize, // expiry time (UNIX timestamp)
+    // iss: String, // the issuer of the token, should be: http://localhost:8989/realms/myrealm
+    // aud: String, // audience (the client / app acting on behalf of the user), should be: my-confidential-client
+    // sub: String, // the subject of the token (whom the token refers to), the user's UUID
+    // azp: String, // authorized party (the client / app acting on behalf of the user), should be: my-confidential-client
+    // preferred_username: String, // the user's (mutable) username
 }
 
 #[derive(Clone)]
@@ -80,7 +80,7 @@ impl KeycloakAuth {
 
 #[async_trait]
 impl Handler for KeycloakAuth {
-    async fn handle(&self, req: &mut Request, depot: &mut Depot, res: &mut Response, ctrl: &mut FlowCtrl) {
+    async fn handle(&self, req: &mut Request, depot: &mut Depot, res: &mut Response, _ctrl: &mut FlowCtrl) {
         let access_token_header = req.headers().get("x-keycloak-access-token").and_then(|v| v.to_str().ok());
         let id_token_header = req.headers().get("x-keycloak-id-token").and_then(|v| v.to_str().ok());
         let realm_header = req.headers().get("x-keycloak-realm").and_then(|v| v.to_str().ok());

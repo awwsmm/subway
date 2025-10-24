@@ -43,7 +43,7 @@ services:
       db_container:
         condition: service_healthy
       subway-keycloak:
-        condition: service_healthy # TODO not prod-ready, create custom keycloak container with healthcheck
+        condition: service_healthy
 
   subway-frontend:
     image: subway-frontend
@@ -53,7 +53,7 @@ services:
       - "5173:5173" # TODO not prod-ready. Also, keep these the same so running in / outside a container uses the same port
     depends_on:
       subway-backend:
-        condition: service_started # TODO not prod-ready, add healthcheck to backend
+        condition: service_healthy
 
 volumes:
   pgdata:
