@@ -33,8 +33,9 @@ WORKDIR /app/backend
 # Copy the built binary from the previous stage
 COPY --from=builder /usr/src/app/target/release/subway-backend ./
 
-# Now copy the resources
+# Now copy the resources and config
 COPY ./backend/resources ./resources
+COPY ./backend/config.toml ./config.toml
 
 # Expose the port
 # TODO define this in an env var which is read by this Dockerfile and also by main.rs
@@ -61,8 +62,6 @@ HEALTHCHECK --interval=1s --retries=120 CMD bash -c '\
   response=$(cat <&3); \
   exec 3>&-; \
   echo "$response" | grep -q "200 OK" || exit 1'
-
-ENV SUBWAY_DB_MODE="docker"
 
 # Command to run the application
 CMD ["./subway-backend"]

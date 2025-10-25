@@ -3,3 +3,12 @@ host = "0.0.0.0"
 
 # override with env var SUBWAY_PORT
 port = 7878
+
+[db] # config related to the database
+
+# accepted values: "docker", "in-memory"
+# override with env var SUBWAY_DB_MODE
+mode = "in-memory"
+
+# override with env var SUBWAY_DB_URL
+url = ""

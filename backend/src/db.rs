@@ -19,10 +19,9 @@ pub(crate) struct Database {
 }
 
 impl Database {
-    pub(crate) fn new() -> Self {
-        if std::env::var("SUBWAY_DB_MODE").is_ok_and(|env| env == "docker") {
-            let db_url = std::env::var("SUBWAY_DB_URL").expect("SUBWAY_DB_URL not defined");
-            let manager = ConnectionManager::<PgConnection>::new(db_url);
+    pub(crate) fn new(mode: &str, url: &str) -> Self {
+        if mode == "docker" {
+            let manager = ConnectionManager::<PgConnection>::new(url);
             let n_connections = 10;
 
             let pool = Pool::builder()

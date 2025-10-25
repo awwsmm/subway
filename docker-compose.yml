@@ -39,6 +39,7 @@ services:
       - "7878:7878" # TODO not prod-ready. Also, keep these the same so running in / outside a container uses the same port
     environment:
       SUBWAY_DB_URL: postgresql://postgres_user:postgres_password@db_container:5432/postgres_db # TODO not prod-ready
+      SUBWAY_DB_MODE: docker
     depends_on:
       db_container:
         condition: service_healthy

@@ -20,6 +20,7 @@ use std::sync::{Arc, Mutex};
 #[tokio::main]
 async fn main() {
 
+    println!("Attempting to read config...");
     let config = Config::new("config.toml");
     println!("Loaded config: {:?}", config);
     let host_port = format!("{}:{}", config.host, config.port);
@@ -82,7 +83,7 @@ async fn main() {
     //   to learn about extracting query parameters
 
     let public_router = Router::new()
-        .hoop(affix_state::inject(Arc::new(Mutex::new(Database::new())))) // add DB to state
+        .hoop(affix_state::inject(Arc::new(Mutex::new(Database::new(config.db.mode.as_ref(), config.db.url.as_ref()))))) // add DB to state
         .push(Router::with_path("hello").get(handlers::misc::hello::hello))
         .push(Router::with_path("posts").post(handlers::posts::post::many))
         .push(Router::with_path("posts").get(handlers::posts::get::many))

@@ -2,9 +2,16 @@ use serde::Deserialize;
 use std::{env, fs};
 
 #[derive(Debug, Deserialize)]
+pub(crate) struct DBConfig {
+    pub(crate) mode: String,
+    pub(crate) url: String,
+}
+
+#[derive(Debug, Deserialize)]
 pub(crate) struct Config {
     pub(crate) host: String,
     pub(crate) port: u16,
+    pub(crate) db: DBConfig,
 }
 
 impl Config {
@@ -21,6 +28,10 @@ impl Config {
             port: match env::var("SUBWAY_PORT").map(|s| s.parse::<u16>()) {
                 Ok(Ok(port)) => port,
                 _ => config.port
+            },
+            db: DBConfig {
+                mode: env::var("SUBWAY_DB_MODE").unwrap_or(config.db.mode),
+                url: env::var("SUBWAY_DB_URL").unwrap_or(config.db.url),
             }
         }
     }
