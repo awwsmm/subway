@@ -1,9 +1,10 @@
-use crate::model::post::Post;
-use crate::DB;
-use salvo::oapi::{endpoint, ToSchema};
-use salvo::{Request, Response};
-use serde::Deserialize;
 use crate::db::tables::posts_by_id::PostsByIdTableRow;
+use crate::db::Database;
+use crate::model::post::Post;
+use salvo::oapi::{endpoint, ToSchema};
+use salvo::{Depot, Request, Response};
+use serde::Deserialize;
+use std::sync::{Arc, Mutex};
 
 /// Fields required to create a Post.
 #[derive(Deserialize, ToSchema)]
@@ -22,12 +23,14 @@ struct ProtoPost {
         (status_code = 200, description = "success response")
     )
 )]
-pub(crate) async fn many(req: &mut Request, res: &mut Response) {
-    let mut lock = DB.lock().await;
-    let table = &mut lock.posts_by_id;
+pub(crate) async fn many(req: &mut Request, depot: &mut Depot, res: &mut Response) {
+    let state = depot.obtain::<Arc<Mutex<Database>>>().unwrap();
 
     match req.parse_json::<Vec<ProtoPost>>().await {
         Ok(proto_posts) => {
+            let mut db = state.lock().unwrap();
+            let table = &mut db.posts_by_id;
+
             match table.insert(
                 proto_posts.into_iter().map(|proto_post| {
                     <PostsByIdTableRow as From<Post>>::from(Post::new(proto_post.title))

@@ -1,9 +1,10 @@
-use crate::model::author::Author;
-use crate::DB;
-use salvo::oapi::{endpoint, ToSchema};
-use salvo::{Request, Response};
-use serde::Deserialize;
 use crate::db::tables::authors_by_id::AuthorsByIdTableRow;
+use crate::db::Database;
+use crate::model::author::Author;
+use salvo::oapi::{endpoint, ToSchema};
+use salvo::{Depot, Request, Response};
+use serde::Deserialize;
+use std::sync::{Arc, Mutex};
 
 /// Fields required to create a Author.
 #[derive(Deserialize, ToSchema)]
@@ -22,12 +23,14 @@ struct ProtoAuthor {
         (status_code = 200, description = "success response")
     )
 )]
-pub(crate) async fn many(req: &mut Request, res: &mut Response) {
-    let mut lock = DB.lock().await;
-    let table = &mut lock.authors_by_id;
+pub(crate) async fn many(req: &mut Request, depot: &mut Depot, res: &mut Response) {
+    let state = depot.obtain::<Arc<Mutex<Database>>>().unwrap();
 
     match req.parse_json::<Vec<ProtoAuthor>>().await {
         Ok(proto_authors) => {
+            let mut db = state.lock().unwrap();
+            let table = &mut db.authors_by_id;
+
             match table.insert(
                 proto_authors.into_iter().map(|proto_author| {
                     <AuthorsByIdTableRow as From<Author>>::from(Author::new(proto_author.name))

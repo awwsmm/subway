@@ -11,13 +11,11 @@ use salvo::catcher::Catcher;
 use salvo::cors::Cors;
 use salvo::http::Method;
 use salvo::prelude::*;
-use std::sync::LazyLock;
-use tokio::sync::Mutex;
+use salvo_extra::affix_state;
+use std::sync::{Arc, Mutex};
 
 // There should be no endpoint definitions here. The purpose of main.rs is just to wire up the
 // endpoint implementations, which themselves live in different files.
-
-static DB: LazyLock<Mutex<Database>> = LazyLock::new(|| Mutex::new(Database::new()));
 
 #[tokio::main]
 async fn main() {
@@ -84,6 +82,7 @@ async fn main() {
     //   to learn about extracting query parameters
 
     let public_router = Router::new()
+        .hoop(affix_state::inject(Arc::new(Mutex::new(Database::new())))) // add DB to state
         .push(Router::with_path("hello").get(handlers::misc::hello::hello))
         .push(Router::with_path("posts").post(handlers::posts::post::many))
         .push(Router::with_path("posts").get(handlers::posts::get::many))
