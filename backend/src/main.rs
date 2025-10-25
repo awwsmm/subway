@@ -2,7 +2,9 @@ mod db;
 mod model;
 mod handlers;
 mod keycloak_auth_middleware;
+mod config;
 
+use crate::config::Config;
 use crate::db::Database;
 use crate::keycloak_auth_middleware::KeycloakAuth;
 use salvo::catcher::Catcher;
@@ -11,6 +13,7 @@ use salvo::http::Method;
 use salvo::prelude::*;
 use std::sync::LazyLock;
 use tokio::sync::Mutex;
+
 // There should be no endpoint definitions here. The purpose of main.rs is just to wire up the
 // endpoint implementations, which themselves live in different files.
 
@@ -18,7 +21,12 @@ static DB: LazyLock<Mutex<Database>> = LazyLock::new(|| Mutex::new(Database::new
 
 #[tokio::main]
 async fn main() {
-    let acceptor = TcpListener::new("0.0.0.0:7878").bind().await;
+
+    let config = Config::new("config.toml");
+    println!("Loaded config: {:?}", config);
+    let host_port = format!("{}:{}", config.host, config.port);
+
+    let acceptor = TcpListener::new(host_port.clone()).bind().await;
 
     // TODO import regex package and enable this
     // PathFilter::register_wisp_regex(
@@ -26,6 +34,7 @@ async fn main() {
     //     Regex::new("[0-9a-fA-F]{8}-([0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}").unwrap(),
     // );
 
+    // TODO pull CORS configuration out into config.toml
     let origins = ["http://localhost:5173"];
 
     let cors = Cors::new()
@@ -94,7 +103,7 @@ async fn main() {
 
     let catcher = Catcher::default().hoop(handlers::misc::not_found::not_found);
 
-    println!("Subway is running at http://localhost:7878");
+    println!("Subway is running at {}", host_port);
 
     Server::new(acceptor).serve(
         Service::new(

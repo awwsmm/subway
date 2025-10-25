@@ -1,0 +1,5 @@
+# override with env var SUBWAY_HOST
+host = "0.0.0.0"
+
+# override with env var SUBWAY_PORT
+port = 7878
