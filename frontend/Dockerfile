@@ -37,8 +37,5 @@ WORKDIR /app/frontend
 COPY --from=builder /app/frontend/dist ./dist
 COPY --from=builder /app/keycloak/realm-export.json ../keycloak/
 
-# Expose port
-EXPOSE 5173
-
 # Serve the app
 CMD ["serve", "-s", "dist", "-l", "5173"]

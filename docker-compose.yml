@@ -13,9 +13,8 @@ services:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U postgres_user -d postgres_db" ] # TODO not prod-ready
-      interval: 5s
-      timeout: 5s
-      retries: 5
+      interval: 1s
+      retries: 120
 
   # TODO not prod-ready
   subway-keycloak:
@@ -101,6 +100,7 @@ services:
     depends_on:
       subway-backend:
         condition: service_healthy
+    command: ["serve", "-s", "dist", "-l", "5173"] # overrides the CMD in the container so the port can be customized
 
 volumes:
   pgdata:
