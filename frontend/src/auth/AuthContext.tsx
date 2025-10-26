@@ -19,6 +19,8 @@ export const AuthContext = createContext<AuthContext | undefined>(undefined);
 
 export const AuthContextProvider: React.FC<AuthContextProps> = (props: AuthContextProps) => {
 
+    console.log(`AuthContextProvider using ${props.implementation} authentication`)
+
     if (props.implementation === "in-memory") {
         return (
             <AuthContextInMemoryProvider>{props.children}</AuthContextInMemoryProvider>

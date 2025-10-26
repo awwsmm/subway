@@ -1,28 +1,52 @@
 services:
+  # backend must connect to DB, backend and frontend must connect to Keycloak, therefore, they must share a network
+  # equivalent to
+  #   docker network create my-network
+
+  # TODO needs production hardening
   db_container:
+    # equivalent to
+    #   docker run \
+    #   --network my-network \
+    #   -p 2345:5432 \
+    #   -e POSTGRES_USER="postgres_user" \
+    #   -e POSTGRES_PASSWORD="postgres_password" \
+    #   -e POSTGRES_DB="postgres_db" \
+    #   -v pgdata:/var/lib/postgresql/data \
+    #   --name postgres-db \
+    #   postgres:17.6
     image: postgres:17.6
     container_name: postgres-db
     restart: unless-stopped
     ports:
-      - "2345:5432" # TODO not prod-ready
+      - "2345:5432"
     environment:
-      POSTGRES_USER: postgres_user # TODO not prod-ready
-      POSTGRES_PASSWORD: postgres_password # TODO not prod-ready
-      POSTGRES_DB: postgres_db # TODO not prod-ready
+      POSTGRES_USER: postgres_user
+      POSTGRES_PASSWORD: postgres_password
+      POSTGRES_DB: postgres_db
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U postgres_user -d postgres_db" ] # TODO not prod-ready
+      test: [ "CMD-SHELL", "pg_isready -U postgres_user -d postgres_db" ]
       interval: 1s
       retries: 120
 
-  # TODO not prod-ready
   subway-keycloak:
+    # equivalent to
+    #   docker run \
+    #   --network my-network \
+    #   -p 8989:8080 \
+    #   -e KC_BOOTSTRAP_ADMIN_USERNAME="kc_bootstrap_admin_username" \
+    #   -e KC_BOOTSTRAP_ADMIN_PASSWORD="kc_bootstrap_admin_password" \
+    #   -v ./keycloak/realm-export.json:/opt/keycloak/data/import/realm-export.json \
+    #   --name subway-keycloak \
+    #   subway-keycloak \
+    #   --import-realm
     image: subway-keycloak
     container_name: subway-keycloak
     restart: unless-stopped
     ports:
-      - "8989:8080" # TODO not prod-ready
+      - "8989:8080"
     environment:
       KC_BOOTSTRAP_ADMIN_USERNAME: kc_bootstrap_admin_username # use this to log in at localhost:8989
       KC_BOOTSTRAP_ADMIN_PASSWORD: kc_bootstrap_admin_password # use this to log in at localhost:8989
@@ -58,13 +82,21 @@ services:
       retries: 120
 
   subway-backend:
+    # equivalent to
+    #   docker run \
+    #     --network my-network \
+    #     -p 7878:7878 \
+    #     -e SUBWAY_DB_URL="postgresql://postgres_user:postgres_password@postgres-db:5432/postgres_db" \
+    #     -e SUBWAY_DB_MODE="docker" \
+    #     --name subway-backend \
+    #     subway-backend
     image: subway-backend
     container_name: subway-backend
     restart: unless-stopped
     ports:
-      - "7878:7878" # TODO not prod-ready. Also, keep these the same so running in / outside a container uses the same port
+      - "7878:7878" # keep these the same so running in / outside a container uses the same port
     environment:
-      SUBWAY_DB_URL: postgresql://postgres_user:postgres_password@db_container:5432/postgres_db # TODO not prod-ready
+      SUBWAY_DB_URL: postgresql://postgres_user:postgres_password@db_container:5432/postgres_db
       SUBWAY_DB_MODE: docker
     depends_on:
       db_container:
@@ -92,13 +124,22 @@ services:
       retries: 120
 
   subway-frontend:
+    # equivalent to
+    #   docker run \
+    #     --network my-network \
+    #     -p 5173:5173 \
+    #     --name subway-frontend \
+    #     subway-frontend \
+    #     serve -s dist -l 5173
     image: subway-frontend
     container_name: subway-frontend
     restart: unless-stopped
     ports:
-      - "5173:5173" # TODO not prod-ready. Also, keep these the same so running in / outside a container uses the same port
-    environment:
-      VITE_SUBWAY_AUTH_MODE: keycloak
+      - "5173:5173" # keep these the same so running in / outside a container uses the same port
+#    NOTE: Vite env vars are "baked in" at build time, so the below does nothing
+#    environment:
+#      VITE_SUBWAY_AUTH_MODE: keycloak
+#    ...for dynamic runtime env vars, a different approach is needed (read from external JSON file, etc.)
     depends_on:
       subway-backend:
         condition: service_healthy

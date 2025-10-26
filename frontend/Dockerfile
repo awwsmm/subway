@@ -1,6 +1,10 @@
 # Step 1: Build the app
 FROM node:24.8.0-alpine AS builder
 
+# override this by providing Docker build args
+# docker build --build-arg VITE_SUBWAY_AUTH_MODE="in-memory" -t subway-frontend -f frontend/Dockerfile .
+ARG VITE_SUBWAY_AUTH_MODE="keycloak"
+
 WORKDIR /app/frontend
 
 # Copy dependencies
@@ -13,6 +17,7 @@ RUN npm ci
 COPY ./frontend .
 COPY ./keycloak/realm-export.json ../keycloak/
 
+# env vars are "baked in" here
 RUN npm run build
 
 # Step 2: Serve the built app
