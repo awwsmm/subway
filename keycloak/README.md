@@ -1,6 +1,6 @@
 # keycloak
 
-This directory contains a single file, `realm-export.json`, which configures the Keycloak Docker container for local development and integration testing. As JSON does not support comments, this README serves as the line-by-line explanation of that file.
+This directory contains a file, `realm-export.json`, which configures the Keycloak Docker container for local development and integration testing. As JSON does not support comments, this README serves as the line-by-line explanation of that file.
 
 ---
 
@@ -20,6 +20,8 @@ Keycloak provides a `"master"` realm by default, but we create our own realm cal
 ```
 
 This means we can access Keycloak over `http://`, and not just `https://`.
+
+> TODO make sure SSL is required when deploying Keycloak in production.
 
 ---
 
@@ -42,9 +44,9 @@ The main Keycloak concepts we care about in our `realm-export.json` file are
 - roles, and
 - users
 
-The code above declares our first (and only) client, called `my-confidential-client`.
+The code above declares our first client, called `my-confidential-client`.
 
-To clarify "users" vs. "clients" -- "users" are the actual humans using your app. The app itself is the "client". The user provides their login information to the client, which sends a request to Keycloak to verify that login information.
+To clarify "users" vs. "clients" -- "users" are the actual humans using your app. The app itself is the "client". The user provides their login information to the client, which sends a request to Keycloak to verify that login information. This project has two clients, the backend and the frontend, each with their own Keycloak `client`.
 
 ---
 
@@ -52,7 +54,7 @@ To clarify "users" vs. "clients" -- "users" are the actual humans using your app
       "enabled": true,
 ```
 
-The client is enabled.
+`my-confidential-client` is enabled.
 
 ---
 
@@ -80,9 +82,7 @@ However
 
 > There is definitely no good way to handle secrets on the client side... the client is not under your control and can never be trusted. [[ source ]](https://community.auth0.com/t/storing-client-secret-in-spa/22717/2)
 
-...so this configuration in `realm-export.json` may have to change in the future, if the plan is for the frontend to use it.
-
-Alternatively, we could add a new `my-public-client` for the frontend.
+...so we also have a public `my-public-client` for the frontend, which will be explained later.
 
 ---
 
@@ -91,6 +91,8 @@ Alternatively, we could add a new `my-public-client` for the frontend.
 ```
 
 The client secret is essentially the client's password. It lets Keycloak know that this is a known, authorized client. It should be protected like a password.
+
+> TODO in production, treat confidential client secrets like passwords. Do not store them in plaintext.
 
 ---
 
@@ -101,6 +103,8 @@ The client secret is essentially the client's password. It lets Keycloak know th
 ```
 
 This field defines all valid URIs to which the user can be redirected after authorization. It exists to prevent redirection to a third party after authorization, where the authenticated user could then be impersonated.
+
+> TODO this will have to be changed for production, as well.
 
 ---
 
@@ -146,7 +150,7 @@ Any scopes not included in either `defaultClientScopes` or `optionalClientScopes
 
 Since we are authenticating with a `"secret"`, we use `"client-secret"` here.
 
-If we were to create a public client, I think we would want to omit this field as well as `"secret"` and change `"publicClient"` to `false`.
+When we create a public client, we omit this field as well as `"secret"` and change `"publicClient"` to `true`.
 
 ---
 
@@ -174,9 +178,7 @@ curl -X POST http://localhost:8989/realms/myrealm/protocol/openid-connect/token 
 
 when using a confidential client.
 
-⚠️⚠️⚠️ TODO ⚠️⚠️⚠️
-
-> Per current Best Current Practice for OAuth 2.0 Security (RFC 9700), this flow MUST NOT be used, preferring alternative methods such as Device Authorization Grant or Authorization code. [[ source ]](https://www.keycloak.org/securing-apps/oidc-layers#_resource_owner_password_credentials_flow)
+> TODO: this is not prod ready, because per "...Best Current Practice for OAuth 2.0 Security (RFC 9700), this flow MUST NOT be used, preferring alternative methods such as Device Authorization Grant or Authorization code." [[ source ]](https://www.keycloak.org/securing-apps/oidc-layers#_resource_owner_password_credentials_flow)
 
 In the frontend application, the [Authorization Code Flow](https://www.keycloak.org/securing-apps/oidc-layers#_authorization_code) should be used instead.
 
@@ -344,6 +346,8 @@ Here we begin the section where we define users for the realm and the clients in
 
 The first predefined user is `"admin"`, which has the `"admin"` and `"user"` roles. The `"admin"` user uses `"password"` verification, with the password `"admin"`.
 
+> TODO obviously, this is not prod-ready. Do not blindly use `realm-export.json` when deploying this app to a production environment.
+
 ---
 
 ```json
@@ -371,4 +375,4 @@ Other users are defined to test other app functionality. The users `"bob"` and `
 
 To distinguish between the `"admin"` user and `"bob"` / `"clara"`, we can use the `"realmRoles"` in the `access_token` (see above) -- `"bob"` and `"clara"` will not have the `"admin"` role.
 
-To distinguish between `"bob"` and `"clara"`, we can use the `"sub"` field of the `id_token` (see above) -- this is a unique ID string (a UUID) which is generated by Keycloak for each user.
+To distinguish between `"bob"` and `"clara"`, we can use the `"sub"` field of the `id_token` (see above) -- this is a unique ID string (a UUID) which is generated by Keycloak for each user. Once created, `sub` cannot be changed, and so can be used to uniquely identify a user in perpetuity.
