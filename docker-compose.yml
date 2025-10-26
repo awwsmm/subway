@@ -30,6 +30,33 @@ services:
     command: --import-realm # TODO development node, not prod-ready
     volumes:
       - ./keycloak/realm-export.json:/opt/keycloak/data/import/realm-export.json
+    healthcheck:
+      #
+      # exec 3<>/dev/tcp/localhost/9000        -- open a TCP connection using bash's built-in support for TCP sockets
+      # echo -e "GET /health ...               -- send a GET request to the /health/ready endpoint. The result will look like
+      #
+      #   HTTP/1.1 200 OK
+      #   content-type: application/json; charset=UTF-8
+      #   cache-control: no-store
+      #   connection: close
+      #   content-length: 145
+      #
+      #   {
+      #       "status": "UP",
+      #       "checks": [
+      #           {
+      #               "name": "Keycloak cluster health check",
+      #               "status": "UP"
+      #           }
+      #       ]
+      #   }
+      #
+      # cat <&3 | grep -q "\"status\": \"UP\"" -- succeeds if the output of file descriptor 3 contains the string '\"status\": \"UP\"'
+      # || exit 1                              -- if grep does not find "200 OK", fail the health check
+      #
+      test: [ "CMD", "/bin/bash", "-c", 'exec 3<>/dev/tcp/localhost/9000 && echo -e "GET /health/ready HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n" >&3 && cat <&3 | grep -q "\"status\": \"UP\"" || exit 1' ]
+      interval: 1s
+      retries: 120
 
   subway-backend:
     image: subway-backend
@@ -45,6 +72,25 @@ services:
         condition: service_healthy
       subway-keycloak:
         condition: service_healthy
+    healthcheck:
+      #
+      # exec 3<>/dev/tcp/localhost/7878 -- open a TCP connection using bash's built-in support for TCP sockets
+      # echo -e "GET /health ...        -- send a GET request to the /health endpoint. The result will look like
+      #
+      #   HTTP/1.1 200 OK
+      #   access-control-allow-credentials: true
+      #   vary: origin
+      #   vary: access-control-request-method
+      #   vary: access-control-request-headers
+      #   connection: close
+      #   content-length: 0
+      #
+      # cat <&3 | grep -q "200 OK"      -- succeeds if the output of file descriptor 3 contains the string '200 OK'
+      # || exit 1                       -- if grep does not find "200 OK", fail the health check
+      #
+      test: [ "CMD", "/bin/bash", "-c", 'exec 3<>/dev/tcp/localhost/7878 && echo -e "GET /health HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n" >&3 && cat <&3 | grep -q "200 OK" || exit 1' ]
+      interval: 1s
+      retries: 120
 
   subway-frontend:
     image: subway-frontend
