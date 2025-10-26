@@ -97,6 +97,8 @@ services:
     restart: unless-stopped
     ports:
       - "5173:5173" # TODO not prod-ready. Also, keep these the same so running in / outside a container uses the same port
+    environment:
+      VITE_SUBWAY_AUTH_MODE: keycloak
     depends_on:
       subway-backend:
         condition: service_healthy
