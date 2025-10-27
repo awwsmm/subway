@@ -3,9 +3,9 @@ import {AuthContextInMemoryProvider} from "./AuthContextInMemory.tsx";
 import {AuthContextKeycloakProvider} from "./AuthContextKeycloak.tsx";
 
 export interface AuthContext {
-    loggedIn: () => boolean;
     login: () => void;
     logout: (redirectUri: string) => void;
+    loggedIn: () => boolean;
     username: () => string | undefined;
     hasRole: (roles: string[]) => boolean;
 }

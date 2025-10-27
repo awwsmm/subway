@@ -16,6 +16,22 @@ Keycloak provides a `"master"` realm by default, but we create our own realm cal
 ---
 
 ```json
+  "accessTokenLifespan": 60,
+```
+
+This sets the lifetime (in seconds) of a Keycloak access token. The access token can be "brought back to life" by using the refresh token.
+
+---
+
+```json
+  "ssoSessionIdleTimeout": 300,
+```
+
+This sets the maximum idle time (in seconds) for a logged-in session. If the user doesn't do anything that needs a token for this amount of time, they will be logged out.
+
+---
+
+```json
   "sslRequired": none,
 ```
 

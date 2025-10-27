@@ -1,5 +1,7 @@
 {
   "realm": "myrealm",
+  "accessTokenLifespan": 60,
+  "ssoSessionIdleTimeout": 300,
   "sslRequired": "none",
   "enabled": true,
   "clients": [

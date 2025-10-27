@@ -10,6 +10,9 @@ const _keycloak = new Keycloak({
 
 export const AuthContextKeycloakProvider = ({ children }: { children: React.ReactNode }) => {
 
+    // TODO move to config
+    const minTokenValiditySeconds = 30;
+
     // Keycloak stores its tokens in memory, which is wiped on a page refresh (the Keycloak object is reconstructed).
     // In order to keep username, roles, etc. persistent across refreshes, we save them to session storage.
     // Session storage is persistent as long as the tab / window is not closed.
@@ -62,23 +65,12 @@ export const AuthContextKeycloakProvider = ({ children }: { children: React.Reac
             .catch((err) => console.error("Keycloak init error:", err))
     }
 
-    // init() is a no-op in this implementation of AuthContext
-    const init = () => {
-        return;
-    }
-
-    // the user is logged in if we know their username
-    const loggedIn = () => {
-        return !!username();
-    }
-
     // delegate login functionality to Keycloak
     const login = () => {
         if (loggedIn()) {
             // do nothing
 
         } else {
-            init(); // call this no-op so linter doesn't mark it as unused
             void _keycloak.login();
         }
     }
@@ -90,18 +82,38 @@ export const AuthContextKeycloakProvider = ({ children }: { children: React.Reac
         void _keycloak.logout({ logoutMethod: "POST" }); // "POST" means the user does not go to a "logout" page
     }
 
+    // the user is logged in if we know their username
+    const loggedIn = () => {
+        return !!_username;
+    }
+
     // pull this info from session storage, not directly from Keycloak
     const username = () => {
+        if (loggedIn()) { updateToken(minTokenValiditySeconds); }
         return _username;
     }
 
     // pull this info from session storage, not directly from Keycloak
     const hasRole = (roles: string[]) => {
+        if (loggedIn()) { updateToken(minTokenValiditySeconds); }
         return _roles.some(role => roles.includes(role));
     }
 
+    // Call updateToken() whenever a logged-in user tries to do _anything_!
+    // This is efficient because it only calls Keycloak if the token is not valid for at least the minValidity period.
+    function updateToken(minValidity: number) {
+        void _keycloak.updateToken(minValidity).then(
+            () => {}, // on success, do nothing
+            () => { // on failure, clear the cache and log in again
+                set_username(undefined);
+                set_roles([]);
+                void _keycloak.login();
+            }
+        )
+    }
+
     return (
-        <AuthContext value={{ loggedIn, login, logout, username, hasRole }}>
+        <AuthContext value={{ login, logout, loggedIn, username, hasRole }}>
             {children}
         </AuthContext>
     );

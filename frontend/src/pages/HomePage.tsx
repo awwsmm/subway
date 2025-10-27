@@ -27,7 +27,7 @@ import {AuthContext} from "../auth/AuthContext.tsx";
 //     return typedFetch<Post[]>(`http://0.0.0.0:7878/posts?limit=${limit}`);
 // }
 
-function Home() {
+function HomePage() {
 
     // const [isLoading, setIsLoading] = useState(false);
     // const [data, setData] = useState<Post[]>([]);
@@ -103,4 +103,4 @@ function Home() {
     )
 }
 
-export default Home
+export default HomePage

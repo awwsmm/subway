@@ -44,11 +44,6 @@ export const AuthContextInMemoryProvider = ({ children }: { children: React.Reac
         }
     }
 
-    // the user is logged in if we know their username
-    const loggedIn = () => {
-        return !!username();
-    }
-
     const login = () => {
         if (loggedIn()) {
             // do nothing
@@ -73,6 +68,11 @@ export const AuthContextInMemoryProvider = ({ children }: { children: React.Reac
         window.location.href = redirectUri;
     }
 
+    // the user is logged in if we know their username
+    const loggedIn = () => {
+        return !!_username;
+    }
+
     // pull this info from session storage
     const username = () => {
         return _username;
@@ -85,7 +85,7 @@ export const AuthContextInMemoryProvider = ({ children }: { children: React.Reac
     }
 
     return (
-        <AuthContext value={{ loggedIn, login, logout, username, hasRole }}>
+        <AuthContext value={{ login, logout, loggedIn, username, hasRole }}>
             {children}
         </AuthContext>
     );
