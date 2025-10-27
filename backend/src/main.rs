@@ -74,7 +74,7 @@ async fn main() {
     //   The :id parameter (or whatever it is) should always be the primary key of the table which
     //   stores those objects. To filter at the database level, use query parameters
     //
-    //     GET /posts?author_id=123&published_after=2025-09-09
+    //     GET /posts?published_after=2025-09-09
 
     // See https://salvo.rs/guide/concepts/router.html#extracting-parameters-from-routes
     //   to learn about extracting parameters from routes using Salvo
@@ -88,9 +88,6 @@ async fn main() {
         .push(Router::with_path("posts").post(handlers::posts::post::many))
         .push(Router::with_path("posts").get(handlers::posts::get::many))
         .push(Router::with_path("posts/{id}").get(handlers::posts::get::one))
-        .push(Router::with_path("authors").post(handlers::authors::post::many))
-        .push(Router::with_path("authors").get(handlers::authors::get::many))
-        .push(Router::with_path("authors/{id}").get(handlers::authors::get::one))
         .push(Router::with_path("health").get(handlers::health::check))
         ;
 

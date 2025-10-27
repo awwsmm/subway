@@ -1,4 +1,3 @@
-use crate::db::tables::authors_by_id::AuthorsByIdTableLike;
 use crate::db::tables::posts_by_id::PostsByIdTableLike;
 use crate::db::tables::{in_memory, postgres};
 use diesel::r2d2::{ConnectionManager, Pool};
@@ -15,7 +14,6 @@ pub(crate) mod tables;
 // list the Tables we want to use here
 pub(crate) struct Database {
     pub(crate) posts_by_id: Box<dyn PostsByIdTableLike>,
-    pub(crate) authors_by_id: Box<dyn AuthorsByIdTableLike>,
 }
 
 impl Database {
@@ -46,7 +44,6 @@ impl Database {
 
                     Database {
                         posts_by_id: Box::new(postgres::posts_by_id::Impl { connection_pool: Arc::clone(&arc_pool) }),
-                        authors_by_id: Box::new(postgres::authors_by_id::Impl { connection_pool: Arc::clone(&arc_pool) }),
                     }
                 }
             }
@@ -54,7 +51,6 @@ impl Database {
         } else {
             Database {
                 posts_by_id: Box::new(in_memory::posts_by_id::Impl::new()),
-                authors_by_id: Box::new(in_memory::authors_by_id::Impl::new()),
             }
         }
     }
