@@ -4,26 +4,31 @@ use crate::model::post::Post;
 use diesel::{Insertable, Queryable, Selectable};
 use serde::Serialize;
 use std::fmt::Debug;
+use std::ops::Deref;
 use uuid::Uuid;
 
 #[derive(Clone, Debug, Serialize, Insertable, Queryable, Selectable)]
 #[diesel(table_name = posts_by_id)]
 pub(crate) struct PostsByIdTableRow {
-    id: Uuid,
+    post_id: Uuid,
+    author_id: Uuid,
     title: String,
+    body: String,
 }
 
 impl TableRow<Uuid> for PostsByIdTableRow {
     fn primary_key(&self) -> &Uuid {
-        &self.id
+        &self.post_id
     }
 }
 
 impl From<Post> for PostsByIdTableRow {
     fn from(value: Post) -> Self {
         Self {
-            id: value.id(),
-            title: value.title().to_string(),
+            post_id: value.post_id().deref().clone(),
+            author_id: value.author_id().deref().clone(),
+            title: value.title().deref().clone(),
+            body: value.body().deref().clone(),
         }
     }
 }

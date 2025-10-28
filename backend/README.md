@@ -39,7 +39,7 @@ Test the database by writing to it and reading from it. Create one or more `Post
 
 ```shell
 curl -X POST localhost:7878/posts \
-  --header "Content-Type: text/json" \
+  --header "Content-Type: application/json" \
   --data '[{"title": "hello, world!"},{"title": "second post"}]'
 ```
 

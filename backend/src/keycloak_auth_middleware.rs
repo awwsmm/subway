@@ -62,7 +62,7 @@ pub struct IdToken {
     // exp: usize, // expiry time (UNIX timestamp)
     // iss: String, // the issuer of the token, should be: http://localhost:8989/realms/myrealm
     // aud: String, // audience (the client / app acting on behalf of the user), should be: my-confidential-client
-    // sub: String, // the subject of the token (whom the token refers to), the user's UUID
+    sub: String, // the subject of the token (whom the token refers to), the user's UUID
     // azp: String, // authorized party (the client / app acting on behalf of the user), should be: my-confidential-client
     // preferred_username: String, // the user's (mutable) username
 }
@@ -111,7 +111,8 @@ impl Handler for KeycloakAuth {
             let header = decode_header(access_token).unwrap();
             println!("looking for kid: {:?}", header.kid);
 
-            let jwk_url = format!("http://keycloak_container:8080/realms/{}/protocol/openid-connect/certs", realm);
+            // TODO container name and port here should be env vars
+            let jwk_url = format!("http://subway-keycloak:8080/realms/{}/protocol/openid-connect/certs", realm);
 
             let jwks: serde_json::Value = client
                 .get(jwk_url)
@@ -138,16 +139,13 @@ impl Handler for KeycloakAuth {
 
             let maybe_id_data = decode::<IdToken>(id_token, &decoding_key, &id_token_validation);
 
-            match maybe_access_data {
-                Ok(access_token_data) => {
-
-                    println!("access token data: {:?}", access_token_data);
-                    println!("id token data: {:?}", maybe_id_data);
-
+            match (maybe_access_data, maybe_id_data) {
+                (Ok(access_token_data), Ok(id_token_data)) => {
                     if access_token_data.claims.realm_access.roles.iter().any(|role| self.roles.contains(&role)) {
 
                         // TODO here we should add the roles, "sub", "preferred_username", etc. to the Depot
-                        depot.insert("username", access_token_data.claims.preferred_username);
+                        depot.insert("token_user_name", access_token_data.claims.preferred_username);
+                        depot.insert("token_user_id", id_token_data.claims.sub);
 
                         return; // Allow request to continue
 
@@ -156,9 +154,9 @@ impl Handler for KeycloakAuth {
                         res.render("User does not have required role(s) to access this resource");
                     }
                 }
-                Err(err) => {
+                _ => {
                     res.status_code(StatusCode::UNAUTHORIZED);
-                    res.render(format!("Invalid token: {err}"));
+                    res.render("Invalid tokens");
                     return;
                 }
             }

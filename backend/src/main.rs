@@ -85,7 +85,6 @@ async fn main() {
     let public_router = Router::new()
         .hoop(affix_state::inject(Arc::new(Mutex::new(Database::new(config.db.mode.as_ref(), config.db.url.as_ref()))))) // add DB to state
         .push(Router::with_path("hello").get(handlers::misc::hello::hello))
-        .push(Router::with_path("posts").post(handlers::posts::post::many))
         .push(Router::with_path("posts").get(handlers::posts::get::many))
         .push(Router::with_path("posts/{id}").get(handlers::posts::get::one))
         .push(Router::with_path("health").get(handlers::health::check))
@@ -106,6 +105,11 @@ async fn main() {
         Service::new(
             public_router
                 .hoop(cors) // Apply the CORS middleware globally
+                .push(
+                    Router::with_path("posts")
+                        .hoop(KeycloakAuth::new(&["user"]))
+                        .post(handlers::posts::post::many)
+                )
                 .push(
                     // this is an admin-only route
                     Router::with_path("/admin-only")

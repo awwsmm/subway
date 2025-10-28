@@ -9,9 +9,11 @@ use std::sync::Arc;
 use uuid::Uuid;
 
 table! {
-    posts_by_id {
-        id -> Uuid,
+    posts_by_id(post_id) {
+        post_id -> Uuid,
+        author_id -> Uuid,
         title -> Text,
+        body -> Text,
     }
 }
 

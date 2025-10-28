@@ -5,6 +5,6 @@ use salvo::{Depot, Response};
 /// Endpoint which can only be called by an authenticated user.
 #[endpoint]
 pub(crate) async fn user_only(depot: &mut Depot, res: &mut Response) {
-    let username = depot.get::<String>("username").cloned().unwrap_or(String::from("friend"));
+    let username = depot.get::<String>("token_user_name").cloned().unwrap_or(String::from("friend"));
     res.render(Text::Plain(format!("welcome, {}!", username)))
 }
