@@ -42,6 +42,12 @@ docker build -t subway-backend -f backend/Dockerfile .
 docker build -t subway-keycloak -f keycloak/Dockerfile .
 ```
 
+You must also create an SSL certificate and key for Keycloak (which requires HTTPS)
+
+```shell
+mkdir -p keycloak/certs && openssl req -x509 -newkey rsa:4096 -keyout keycloak/certs/key.pem -out keycloak/certs/cert.pem -sha256 -days 3650 -nodes -subj '/CN=localhost'
+```
+
 then, you can run the full stack with `docker-compose`
 
 ```shell
@@ -110,7 +116,7 @@ You must first acquire an auth token and an id token from Keycloak (which must a
 
 ```shell
 export KC_UNAME="bob"; export KC_PWD=$KC_UNAME; \
- eval $(curl -X POST http://localhost:8989/realms/myrealm/protocol/openid-connect/token \
+ eval $(curl -k -X POST https://localhost/realms/myrealm/protocol/openid-connect/token \
   -d "client_id=my-confidential-client" \
   -d "client_secret=my-client-secret" \
   -d "grant_type=password" \
@@ -135,7 +141,7 @@ Similarly, there is an `admin-only` endpoint, which can only be accessed by the 
 
 ```shell
 export KC_UNAME="admin"; export KC_PWD=$KC_UNAME; \
- eval $(curl -X POST http://localhost:8989/realms/myrealm/protocol/openid-connect/token \
+ eval $(curl -k -X POST https://localhost/realms/myrealm/protocol/openid-connect/token \
   -d "client_id=my-confidential-client" \
   -d "client_secret=my-client-secret" \
   -d "grant_type=password" \

@@ -15,7 +15,7 @@ struct Roles {
 //   "exp": 1760906329,
 //   "iat": 1760906029,
 //   "jti": "onrtro:61b2bdd0-d403-9f89-5e99-cea205794395",
-//   "iss": "http://localhost:8989/realms/myrealm",
+//   "iss": "https://localhost/realms/myrealm",
 //   "typ": "Bearer",
 //   "azp": "my-confidential-client",
 //   "sid": "652809cd-9f35-492e-b358-f040bf4dd3b1",
@@ -33,7 +33,7 @@ struct Roles {
 #[derive(Debug, Deserialize, Clone)]
 struct AccessToken {
     // exp: usize, // expiry time (UNIX timestamp)
-    // iss: String, // the issuer of the token, should be: http://localhost:8989/realms/myrealm
+    // iss: String, // the issuer of the token, should be: https://localhost/realms/myrealm
     // azp: String, // authorized party (the client / app acting on behalf of the user), should be: my-confidential-client
     realm_access: Roles, // list of roles in the realm
     preferred_username: String, // the user's (mutable) username
@@ -45,7 +45,7 @@ struct AccessToken {
 //   "exp": 1760359940,
 //   "iat": 1760359640,
 //   "jti": "a0019df9-7370-0e74-c316-a613a6fc9783",
-//   "iss": "http://localhost:8989/realms/myrealm",
+//   "iss": "https://localhost/realms/myrealm",
 //   "aud": "my-confidential-client",
 //   "sub": "7f16300f-6063-41ef-9428-ced32ef5adad",
 //   "typ": "ID",
@@ -60,7 +60,7 @@ struct AccessToken {
 #[derive(Debug, Deserialize, Clone)]
 pub struct IdToken {
     // exp: usize, // expiry time (UNIX timestamp)
-    // iss: String, // the issuer of the token, should be: http://localhost:8989/realms/myrealm
+    // iss: String, // the issuer of the token, should be: https://localhost/realms/myrealm
     // aud: String, // audience (the client / app acting on behalf of the user), should be: my-confidential-client
     sub: String, // the subject of the token (whom the token refers to), the user's UUID
     // azp: String, // authorized party (the client / app acting on behalf of the user), should be: my-confidential-client

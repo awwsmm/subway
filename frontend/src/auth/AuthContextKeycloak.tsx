@@ -3,7 +3,7 @@ import React, {useEffect, useState} from "react";
 import {AuthContext} from "./AuthContext.tsx";
 
 const _keycloak = new Keycloak({
-    url: "http://localhost:8989",
+    url: "https://localhost",
     realm: "myrealm",
     clientId: "my-public-client",
 });

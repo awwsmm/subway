@@ -13,5 +13,13 @@ FROM quay.io/keycloak/keycloak:26.4.1-0
 # Copy the build artifacts from the builder image
 COPY --from=builder /opt/keycloak/ /opt/keycloak/
 
+# COPY the certificate and key from localhost
+COPY ./keycloak/certs /opt/keycloak/certs
+
+# COPY the healthcheck script
+COPY ./keycloak/HealthCheck.java /opt/keycloak/
+
 # entrypoint to run Keycloak
-ENTRYPOINT ["/opt/keycloak/bin/kc.sh", "start", "--health-enabled=true", "--http-enabled=true", "--hostname-strict=false"]
+# Note that this requires a cert.pem and a key.pem file. Create these with
+# mkdir -p keycloak/certs && openssl req -x509 -newkey rsa:4096 -keyout keycloak/certs/key.pem -out keycloak/certs/cert.pem -sha256 -days 3650 -nodes -subj '/CN=localhost'
+ENTRYPOINT ["/opt/keycloak/bin/kc.sh", "start", "--health-enabled=true", "--https-certificate-file=/opt/keycloak/certs/cert.pem", "--https-certificate-key-file=/opt/keycloak/certs/key.pem", "--hostname=localhost"]
