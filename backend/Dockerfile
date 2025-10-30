@@ -18,6 +18,9 @@ RUN cargo build --release
 # Now copy the source code
 COPY ./backend/src ./src
 
+# ...and the TLS certificate
+COPY ./backend/certs ./certs
+
 # ...and the DB migration code
 COPY ./backend/migrations ./migrations
 

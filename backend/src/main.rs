@@ -8,6 +8,7 @@ use crate::config::Config;
 use crate::db::Database;
 use crate::keycloak_auth_middleware::KeycloakAuth;
 use salvo::catcher::Catcher;
+use salvo::conn::rustls::{Keycert, RustlsConfig};
 use salvo::cors::Cors;
 use salvo::http::Method;
 use salvo::prelude::*;
@@ -20,12 +21,30 @@ use std::sync::{Arc, Mutex};
 #[tokio::main]
 async fn main() {
 
+    println!("Attempting to load certs...");
+
+    // Load TLS certificate and private key from embedded PEM files
+    let cert = include_bytes!("../certs/cert.pem").to_vec();
+    let key = include_bytes!("../certs/key.pem").to_vec();
+
+    println!("Attempting to configure TLS...");
+
+    // Configure TLS settings using Rustls
+    let tls_config = RustlsConfig::new(Keycert::new().cert(cert.as_slice()).key(key.as_slice()));
+
     println!("Attempting to read config...");
     let config = Config::new("config.toml");
     println!("Loaded config: {:?}", config);
     let host_port = format!("{}:{}", config.host, config.port);
 
-    let acceptor = TcpListener::new(host_port.clone()).bind().await;
+    // Create TCP listener with TLS encryption
+    let listener = TcpListener::new(host_port.clone()).rustls(tls_config.clone());
+
+    // Create QUIC listener and combine with TCP listener
+    let acceptor = QuinnListener::new(tls_config.build_quinn_config().unwrap(), ("0.0.0.0", 5800))
+        .join(listener)
+        .bind()
+        .await;
 
     // TODO import regex package and enable this
     // PathFilter::register_wisp_regex(

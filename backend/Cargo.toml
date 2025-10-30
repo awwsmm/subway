@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-salvo = { version = "0.84.0", features = ["acme", "cors", "quinn", "oapi"] }
+salvo = { version = "0.84.0", features = ["acme", "cors", "quinn", "oapi", "rustls"] }
 tokio = "1.47.1"
 serde = { version = "1.0.219", features = ["derive"] }
 uuid = { version = "1.17.0", features = ["v4", "serde"] }

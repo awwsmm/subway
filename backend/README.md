@@ -10,11 +10,13 @@ Execute the following command in a terminal
 cargo run
 ```
 
-and then visit http://localhost:7878/hello in a browser to see a web page.
+and then visit https://localhost:7878/hello in a browser to see a web page.
 
-Visit http://localhost:7878/does-not-exist to see the 404 page.
+> NOTE: you might get a warning in your browser about this page not being secure. This is because, as of right now, this repo uses self-signed TLS certificates. These are viewed as less secure than certificates issued by a third-party certificate authority. You can ignore these warnings while this project is in development.
 
-Visit http://localhost:7878/swagger-ui to see the API documentation.
+Visit https://localhost:7878/does-not-exist to see the 404 page.
+
+Visit https://localhost:7878/swagger-ui to see the API documentation.
 
 Press <kbd>control</kbd> + <kbd>C</kbd> in the terminal to shut down the server.
 
@@ -37,8 +39,10 @@ Do not use hot reloading when
 
 Test the database by writing to it and reading from it. Create one or more `Post`s with random `id`s by executing
 
+> TODO: this currently does not work, as this `POST` endpoint pulls post author information from the Keycloak access token. Running this without Keycloak, therefore, fails.
+
 ```shell
-curl -X POST localhost:7878/posts \
+curl -X POST -k https://localhost:7878/posts \
   --header "Content-Type: application/json" \
   --data '[{"title": "hello, world!"},{"title": "second post"}]'
 ```

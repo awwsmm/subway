@@ -38,14 +38,20 @@ docker build -t subway-frontend -f frontend/Dockerfile .
 docker build -t subway-backend -f backend/Dockerfile .
 ```
 
+You must also create a TLS certificate and key for the backend (which requires HTTPS)
+
+```shell
+mkdir -p backend/certs && openssl req -x509 -newkey rsa:4096 -keyout backend/certs/key.pem -out backend/certs/cert.pem -sha256 -days 47 -nodes -subj '/CN=localhost'
+```
+
 ```shell
 docker build -t subway-keycloak -f keycloak/Dockerfile .
 ```
 
-You must also create an SSL certificate and key for Keycloak (which requires HTTPS)
+You must also create a TLS certificate and key for Keycloak (which requires HTTPS)
 
 ```shell
-mkdir -p keycloak/certs && openssl req -x509 -newkey rsa:4096 -keyout keycloak/certs/key.pem -out keycloak/certs/cert.pem -sha256 -days 3650 -nodes -subj '/CN=localhost'
+mkdir -p keycloak/certs && openssl req -x509 -newkey rsa:4096 -keyout keycloak/certs/key.pem -out keycloak/certs/cert.pem -sha256 -days 47 -nodes -subj '/CN=localhost'
 ```
 
 then, you can run the full stack with `docker-compose`
@@ -98,12 +104,12 @@ LoginPage with the dummy users `admin` (password `admin`), `bob` (password `bob`
 
 > Note: this currently only works for [containerized](#containerized) development.
 
-There is a protected endpoint at http://localhost:7878/user-only
+There is a protected endpoint at https://localhost:7878/user-only
 
 If you try to access it unauthorized...
 
 ```shell
-curl http://localhost:7878/user-only
+curl -k https://localhost:7878/user-only
 ```
 
 ...you will get a response like
@@ -128,7 +134,7 @@ export KC_UNAME="bob"; export KC_PWD=$KC_UNAME; \
 You can then `curl` this endpoint like
 
 ```shell
-curl -H "x-keycloak-access-token: $ATOKEN" -H "x-keycloak-id-token: $ITOKEN" -H "x-keycloak-realm: myrealm" http://localhost:7878/user-only
+curl -H "x-keycloak-access-token: $ATOKEN" -H "x-keycloak-id-token: $ITOKEN" -H "x-keycloak-realm: myrealm" -k https://localhost:7878/user-only
 ```
 
 You should receive a response like
@@ -153,7 +159,7 @@ export KC_UNAME="admin"; export KC_PWD=$KC_UNAME; \
 You can then `curl` this endpoint like
 
 ```shell
-curl -H "x-keycloak-access-token: $ATOKEN" -H "x-keycloak-id-token: $ITOKEN" -H "x-keycloak-realm: myrealm" http://localhost:7878/admin-only
+curl -H "x-keycloak-access-token: $ATOKEN" -H "x-keycloak-id-token: $ITOKEN" -H "x-keycloak-realm: myrealm" -k https://localhost:7878/admin-only
 ```
 
 You should receive a response like
