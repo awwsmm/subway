@@ -8,10 +8,16 @@ pub(crate) struct DBConfig {
 }
 
 #[derive(Debug, Deserialize)]
+pub(crate) struct AuthConfig {
+    pub(crate) mode: String,
+}
+
+#[derive(Debug, Deserialize)]
 pub(crate) struct Config {
     pub(crate) host: String,
     pub(crate) port: u16,
     pub(crate) db: DBConfig,
+    pub(crate) auth: AuthConfig,
 }
 
 impl Config {
@@ -32,10 +38,10 @@ impl Config {
             db: DBConfig {
                 mode: env::var("SUBWAY_DB_MODE").unwrap_or(config.db.mode),
                 url: env::var("SUBWAY_DB_URL").unwrap_or(config.db.url),
+            },
+            auth: AuthConfig {
+                mode: env::var("SUBWAY_AUTH_MODE").unwrap_or(config.auth.mode),
             }
         }
     }
 }
-
-
-

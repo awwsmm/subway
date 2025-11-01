@@ -4,14 +4,15 @@ use salvo::oapi::endpoint;
 use salvo::prelude::Json;
 use salvo::{Depot, Request, Response};
 use std::str::FromStr;
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
+use tokio::sync::Mutex;
 use uuid::Uuid;
 
 /// Endpoint to GET one single Post by id.
 #[endpoint]
 pub(crate) async fn one(req: &mut Request, depot: &mut Depot, res: &mut Response) {
     let state = depot.obtain::<Arc<Mutex<Database>>>().unwrap();
-    let db = state.lock().unwrap();
+    let db = state.lock().await;
     let table = &db.posts_by_id;
 
     let id: String = req.param::<String>("id").expect("request did not contain a 'id' param");
@@ -43,7 +44,7 @@ pub(crate) async fn one(req: &mut Request, depot: &mut Depot, res: &mut Response
 )]
 pub(crate) async fn many(req: &mut Request, depot: &mut Depot, res: &mut Response) {
     let state = depot.obtain::<Arc<Mutex<Database>>>().unwrap();
-    let db = state.lock().unwrap();
+    let db = state.lock().await;
     let table = &db.posts_by_id;
 
     let limit = req.query::<u32>("limit").unwrap_or(10);

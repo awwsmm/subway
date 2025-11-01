@@ -7,7 +7,7 @@ edition = "2024"
 salvo = { version = "0.84.0", features = ["acme", "cors", "quinn", "oapi", "rustls"] }
 tokio = "1.47.1"
 serde = { version = "1.0.219", features = ["derive"] }
-uuid = { version = "1.17.0", features = ["v4", "serde"] }
+uuid = { version = "1.17.0", features = ["v3", "v4", "serde"] }
 diesel = { version = "2.2.12", features = ["r2d2", "postgres", "uuid"] }
 pq-sys = { version = "0.7.2", features = ["bundled"] } # required by diesel, even though we do not use it directly
 openssl-sys = { version = "0.9.100", features = ["vendored"] } # required by diesel, even though we do not use it directly
@@ -17,3 +17,5 @@ reqwest = { version = "0.12.23", features = ["json"] }
 serde_json = "1.0.145"
 toml = "0.9.8"
 salvo_extra = { version = "0.84.2", features = ["affix-state"] }
+rand = "0.9.2"
+base64 = "0.22.1"

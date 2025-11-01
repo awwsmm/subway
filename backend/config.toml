@@ -12,3 +12,9 @@ mode = "in-memory"
 
 # override with env var SUBWAY_DB_URL
 url = ""
+
+[auth] # config related to authentication
+
+# accepted values: "keycloak", "in-memory"
+# override with env var SUBWAY_AUTH_MODE
+mode = "in-memory"

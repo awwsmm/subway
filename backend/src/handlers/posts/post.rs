@@ -5,7 +5,8 @@ use crate::model::post::Post;
 use salvo::oapi::{endpoint, ToSchema};
 use salvo::{Depot, Request, Response};
 use serde::Deserialize;
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
+use tokio::sync::Mutex;
 use uuid::Uuid;
 
 /// Fields required to create a Post.
@@ -32,7 +33,7 @@ pub(crate) async fn many(req: &mut Request, depot: &mut Depot, res: &mut Respons
 
     match req.parse_json::<Vec<ProtoPost>>().await {
         Ok(proto_posts) => {
-            let mut db = state.lock().unwrap();
+            let mut db = state.lock().await;
             let table = &mut db.posts_by_id;
 
             match table.insert(

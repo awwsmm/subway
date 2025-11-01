@@ -3,7 +3,9 @@ mod model;
 mod handlers;
 mod keycloak_auth_middleware;
 mod config;
+mod auth;
 
+use crate::auth::Authenticator;
 use crate::config::Config;
 use crate::db::Database;
 use crate::keycloak_auth_middleware::KeycloakAuth;
@@ -13,7 +15,8 @@ use salvo::cors::Cors;
 use salvo::http::Method;
 use salvo::prelude::*;
 use salvo_extra::affix_state;
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
+use tokio::sync::Mutex;
 
 // There should be no endpoint definitions here. The purpose of main.rs is just to wire up the
 // endpoint implementations, which themselves live in different files.
@@ -21,30 +24,26 @@ use std::sync::{Arc, Mutex};
 #[tokio::main]
 async fn main() {
 
-    println!("Attempting to load certs...");
-
-    // Load TLS certificate and private key from embedded PEM files
     let cert = include_bytes!("../certs/cert.pem").to_vec();
     let key = include_bytes!("../certs/key.pem").to_vec();
+    println!("Loaded certs");
 
-    println!("Attempting to configure TLS...");
-
-    // Configure TLS settings using Rustls
     let tls_config = RustlsConfig::new(Keycert::new().cert(cert.as_slice()).key(key.as_slice()));
+    println!("Configured TLS");
 
-    println!("Attempting to read config...");
     let config = Config::new("config.toml");
     println!("Loaded config: {:?}", config);
-    let host_port = format!("{}:{}", config.host, config.port);
 
-    // Create TCP listener with TLS encryption
+    let host_port = format!("{}:{}", config.host, config.port);
     let listener = TcpListener::new(host_port.clone()).rustls(tls_config.clone());
+    println!("Created TCP Listener");
 
     // Create QUIC listener and combine with TCP listener
     let acceptor = QuinnListener::new(tls_config.build_quinn_config().unwrap(), ("0.0.0.0", 5800))
         .join(listener)
         .bind()
         .await;
+    println!("Created QUIC listener and bound to {}", host_port);
 
     // TODO import regex package and enable this
     // PathFilter::register_wisp_regex(
@@ -62,6 +61,8 @@ async fn main() {
         .allow_credentials(true) // Allow sending of cookies and authentication headers
         .max_age(86400) // Cache preflight requests for 24 hours
         .into_handler();
+
+    println!("Configured CORS");
 
     // Endpoints always use the nouns from /model, as plural.
     //   reproduced from: https://stackoverflow.com/a/32257339/2925434
@@ -103,11 +104,14 @@ async fn main() {
 
     let public_router = Router::new()
         .hoop(affix_state::inject(Arc::new(Mutex::new(Database::new(config.db.mode.as_ref(), config.db.url.as_ref()))))) // add DB to state
+        .hoop(affix_state::inject(Arc::new(Mutex::new(Authenticator::new(config.auth.mode.as_ref()))))) // add auth to state
         .push(Router::with_path("hello").get(handlers::misc::hello::hello))
         .push(Router::with_path("posts").get(handlers::posts::get::many))
         .push(Router::with_path("posts/{id}").get(handlers::posts::get::one))
         .push(Router::with_path("health").get(handlers::health::check))
         ;
+
+    println!("Created router");
 
     // TODO consider replacing env!("CARGO_PKG_VERSION") with clap's crate_version macro
     let doc = OpenApi::new("test api", env!("CARGO_PKG_VERSION")).merge_router(&public_router);
@@ -118,12 +122,16 @@ async fn main() {
 
     let catcher = Catcher::default().hoop(handlers::misc::not_found::not_found);
 
-    println!("Subway is running at {}", host_port);
+    println!("Added OpenAPI docs");
 
     Server::new(acceptor).serve(
         Service::new(
             public_router
                 .hoop(cors) // Apply the CORS middleware globally
+                .push(
+                    Router::with_path("login")
+                        .post(handlers::login::login)
+                )
                 .push(
                     Router::with_path("posts")
                         .hoop(KeycloakAuth::new(&["user"]))
