@@ -62,34 +62,31 @@ pub(crate) trait AuthenticatorLike {
     async fn login(&mut self, username: String, password: String) -> Result<Token, String>;
 }
 
-pub(crate) struct Keycloak(keycloak::Authenticator);
-pub(crate) struct InMemory(in_memory::Authenticator);
-
 pub(crate) enum Authenticator {
-    Keycloak(Keycloak),
-    InMemory(InMemory),
+    Keycloak(keycloak::Authenticator),
+    InMemory(in_memory::Authenticator),
 }
 
 impl Authenticator {
     pub(crate) fn new(mode: &str) -> Self {
         match mode {
-            "keycloak" => Authenticator::Keycloak(Keycloak(keycloak::Authenticator::new())),
-            "in-memory" => Authenticator::InMemory(InMemory(in_memory::Authenticator::new())),
+            "keycloak" => Authenticator::Keycloak(keycloak::Authenticator::new()),
+            "in-memory" => Authenticator::InMemory(in_memory::Authenticator::new()),
             _ => panic!("Unsupported auth mode: {}", mode),
         }
     }
 
     pub(crate) fn get_user(&self, token: Token) -> Option<User> {
         match self {
-            Authenticator::Keycloak(x) => x.0.state.get_user(token),
-            Authenticator::InMemory(x) => x.0.state.get_user(token),
+            Authenticator::Keycloak(x) => x.state.get_user(token),
+            Authenticator::InMemory(x) => x.state.get_user(token),
         }
     }
 
     pub(crate) async fn login(&mut self, username: String, password: String) -> Result<Token, String> {
         match self {
-            Authenticator::Keycloak(x) => x.0.login(username, password).await,
-            Authenticator::InMemory(x) => x.0.login(username, password).await,
+            Authenticator::Keycloak(x) => x.login(username, password).await,
+            Authenticator::InMemory(x) => x.login(username, password).await,
         }
     }
 }

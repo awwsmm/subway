@@ -5,7 +5,7 @@ use std::hash::{DefaultHasher, Hash, Hasher};
 use std::io::BufReader;
 use uuid::Uuid;
 
-pub(in crate::auth) struct Authenticator {
+pub(crate) struct Authenticator {
     pub(in crate::auth) state: AuthenticatorState,
 }
 

@@ -151,3 +151,36 @@ You should receive a response like
 ```
 welcome, administrator
 ```
+
+To login in to the backend directly via Keycloak, as the frontend does, first, get an auth token and an id token from Keycloak
+
+```shell
+export KC_UNAME="clara"; export KC_PWD=$KC_UNAME; \
+ eval $(curl -k -X POST https://localhost/realms/myrealm/protocol/openid-connect/token \
+  -d "client_id=my-confidential-client" \
+  -d "client_secret=my-client-secret" \
+  -d "grant_type=password" \
+  -d "username=$KC_UNAME" \
+  -d "password=$KC_PWD" \
+  -d "scope=openid" | jq -r '"export ATOKEN=\(.access_token) ITOKEN=\(.id_token)"')
+```
+
+Then, use the `/login-keycloak` endpoint
+
+```shell
+export TOKEN=$(curl -k -H "x-keycloak-access-token: $ATOKEN" -H "x-keycloak-id-token: $ITOKEN" -H "x-keycloak-realm: myrealm" https://localhost:7878/login)
+```
+
+Finally, use the other endpoints as normal
+
+```shell
+curl -k -H "x-token: $TOKEN" https://localhost:7878/user-only
+```
+
+You should receive a response like
+
+```
+welcome, clara!
+```
+
+The `/login` endpoint is required for backend auth when in-memory authentication is used, but (as can be seen above) it's also a convenient shortcut when Keycloak is in use. When Keycloak is being used, both the `/login` and `/login-keycloak` endpoints authenticate via Keycloak, but the `/login` one gets the auth and id tokens and parses them automatically.

@@ -1,6 +1,6 @@
 use crate::auth::{AuthenticatorLike, AuthenticatorState, Token, User};
 use jsonwebtoken::{decode, decode_header, Algorithm, DecodingKey, Validation};
-use reqwest::ClientBuilder;
+use reqwest::{Client, ClientBuilder};
 use serde::Deserialize;
 use std::sync::Arc;
 
@@ -67,13 +67,84 @@ struct IdToken {
     // preferred_username: String, // the user's (mutable) username
 }
 
-pub(in crate::auth) struct Authenticator {
+pub(crate) struct Authenticator {
     pub(in crate::auth) state: AuthenticatorState,
+    client: Client,
 }
 
 impl Authenticator {
     pub(in crate::auth) fn new() -> Self {
-        Self { state: AuthenticatorState::new() }
+        Self {
+            state: AuthenticatorState::new(),
+            client: ClientBuilder::new()
+                .danger_accept_invalid_certs(true) // TODO FIXME do not use in production
+                .build()
+                .unwrap(),
+        }
+    }
+
+    pub(crate) async fn login_with_tokens(
+        &mut self,
+        access_token: &str,
+        id_token: &str,
+        realm: &str
+    ) -> Result<Token, String> {
+
+        let header = decode_header(access_token).unwrap();
+        println!("looking for kid: {:?}", header.kid);
+
+        // TODO container name and port here should be env vars
+        let jwk_url = format!("https://subway-keycloak:8443/realms/{}/protocol/openid-connect/certs", realm);
+
+        let jwks: serde_json::Value = self.client
+            .get(jwk_url)
+            .bearer_auth(access_token)
+            .send().await.unwrap().json().await.unwrap();
+
+        println!("JWKs found: {:?}", jwks);
+
+        // Use the first key from the JWKs (in real use, you should match "kid")
+        let jwk = jwks["keys"].as_array().unwrap().iter()
+            .find(|arr| {
+                arr.as_object().unwrap().get("kid").unwrap().as_str().unwrap() == header.kid.clone().unwrap()
+            }).unwrap();
+
+        let n = jwk["n"].as_str().unwrap();
+        let e = jwk["e"].as_str().unwrap();
+        let decoding_key = Arc::new(DecodingKey::from_rsa_components(n, e).unwrap());
+
+        let access_token_validation = Validation::new(Algorithm::RS256);
+
+        let maybe_access_data = decode::<AccessToken>(access_token, &decoding_key, &access_token_validation);
+
+        let client = "my-confidential-client";
+
+        let mut id_token_validation = Validation::new(Algorithm::RS256);
+        id_token_validation.set_audience(&[client]);
+
+        let maybe_id_data = decode::<IdToken>(id_token, &decoding_key, &id_token_validation);
+
+        match (maybe_access_data, maybe_id_data) {
+            (Ok(access_token_data), Ok(id_token_data)) => {
+
+                let user = User {
+                    name: access_token_data.claims.preferred_username,
+                    id: id_token_data.claims.sub.parse().unwrap(),
+                    roles: access_token_data.claims.realm_access.roles.clone(),
+                };
+
+                let token = self.state.generate_token(32);
+
+                println!("inserting {:?} -> {:?}", token.clone(), user);
+
+                self.state.map.insert(token.clone(), user);
+
+                Ok(token)
+            }
+            _ => {
+                Err(String::from("invalid tokens"))
+            }
+        }
     }
 }
 
@@ -136,63 +207,7 @@ impl AuthenticatorLike for Authenticator {
             let id_token = id_token_header.unwrap();
             let realm = realm_header.unwrap();
 
-            // let client = Client::new();
-
-            let header = decode_header(access_token).unwrap();
-            println!("looking for kid: {:?}", header.kid);
-
-            // TODO container name and port here should be env vars
-            let jwk_url = format!("https://subway-keycloak:8443/realms/{}/protocol/openid-connect/certs", realm);
-
-            let jwks: serde_json::Value = client
-                .get(jwk_url)
-                .bearer_auth(access_token)
-                .send().await.unwrap().json().await.unwrap();
-
-            println!("JWKs found: {:?}", jwks);
-
-            // Use the first key from the JWKs (in real use, you should match "kid")
-            let jwk = jwks["keys"].as_array().unwrap().iter()
-                .find(|arr| {
-                    arr.as_object().unwrap().get("kid").unwrap().as_str().unwrap() == header.kid.clone().unwrap()
-                }).unwrap();
-
-            let n = jwk["n"].as_str().unwrap();
-            let e = jwk["e"].as_str().unwrap();
-            let decoding_key = Arc::new(DecodingKey::from_rsa_components(n, e).unwrap());
-
-            let access_token_validation = Validation::new(Algorithm::RS256);
-
-            let maybe_access_data = decode::<AccessToken>(access_token, &decoding_key, &access_token_validation);
-
-            let client = "my-confidential-client";
-
-            let mut id_token_validation = Validation::new(Algorithm::RS256);
-            id_token_validation.set_audience(&[client]);
-
-            let maybe_id_data = decode::<IdToken>(id_token, &decoding_key, &id_token_validation);
-
-            match (maybe_access_data, maybe_id_data) {
-                (Ok(access_token_data), Ok(id_token_data)) => {
-
-                    let user = User {
-                        name: access_token_data.claims.preferred_username,
-                        id: id_token_data.claims.sub.parse().unwrap(),
-                        roles: access_token_data.claims.realm_access.roles.clone(),
-                    };
-
-                    let token = self.state.generate_token(32);
-
-                    println!("inserting {:?} -> {:?}", token.clone(), user);
-
-                    self.state.map.insert(token.clone(), user);
-
-                    Ok(token)
-                }
-                _ => {
-                    Err(String::from("invalid tokens"))
-                }
-            }
+            self.login_with_tokens(access_token, id_token, realm).await
         }
     }
 }

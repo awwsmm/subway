@@ -128,10 +128,19 @@ async fn main() {
         Service::new(
             public_router
                 .hoop(cors) // Apply the CORS middleware globally
-                .push(
-                    Router::with_path("login")
-                        .post(handlers::login::login)
-                )
+                .push({ // login flows
+
+                    let router = Router::new()
+                        .push(Router::with_path("login").post(handlers::login::username_and_password::login));
+
+                    match config.auth.mode.as_str() {
+                        "keycloak" => router
+                            .push(Router::with_path("login-keycloak").get(handlers::login::keycloak_token::login)),
+                        "in-memory" => router,
+                        _ => panic!("unsupported authentication mode: {}", config.auth.mode),
+                    }
+
+                })
                 .push(
                     Router::with_path("posts")
                         .hoop(Auth::new(&["user"]))
