@@ -5,7 +5,7 @@ mod auth_middleware;
 mod config;
 mod auth;
 
-use crate::auth::{Authenticator, Authenticators, InMemoryAuthenticator, KeycloakAuthenticator};
+use crate::auth::Authenticator;
 use crate::auth_middleware::Auth;
 use crate::config::Config;
 use crate::db::Database;
@@ -102,15 +102,9 @@ async fn main() {
     // See https://salvo.rs/guide/concepts/request#retrieving-query-parameters
     //   to learn about extracting query parameters
 
-    let authenticator: Authenticators = match config.auth.mode.as_str() {
-        "keycloak" => Authenticators::Keycloak(KeycloakAuthenticator::new()),
-        "in-memory" => Authenticators::InMemory(InMemoryAuthenticator::new()),
-        _ => panic!("Unsupported auth mode: {}", config.auth.mode),
-    };
-
     let public_router = Router::new()
         .hoop(affix_state::inject(Arc::new(Mutex::new(Database::new(config.db.mode.as_ref(), config.db.url.as_ref()))))) // add DB to state
-        .hoop(affix_state::inject(Arc::new(Mutex::new(authenticator)))) // add auth to state
+        .hoop(affix_state::inject(Arc::new(Mutex::new(Authenticator::new(config.auth.mode.as_str()))))) // add auth to state
         .push(Router::with_path("hello").get(handlers::misc::hello::hello))
         .push(Router::with_path("posts").get(handlers::posts::get::many))
         .push(Router::with_path("posts/{id}").get(handlers::posts::get::one))
