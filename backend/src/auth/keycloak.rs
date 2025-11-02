@@ -2,6 +2,7 @@ use crate::auth::{AuthenticatorLike, AuthenticatorState, Token, User};
 use jsonwebtoken::{decode, decode_header, Algorithm, DecodingKey, Validation};
 use reqwest::{Client, ClientBuilder};
 use serde::Deserialize;
+use std::cmp::min;
 use std::sync::Arc;
 
 #[derive(Deserialize, Clone)]
@@ -32,7 +33,7 @@ struct Roles {
 // }
 #[derive(Deserialize, Clone)]
 struct AccessToken {
-    // exp: usize, // expiry time (UNIX timestamp)
+    exp: u64, // expiry time (UNIX timestamp)
     // iss: String, // the issuer of the token, should be: https://localhost/realms/myrealm
     // azp: String, // authorized party (the client / app acting on behalf of the user), should be: my-confidential-client
     realm_access: Roles, // list of roles in the realm
@@ -59,7 +60,7 @@ struct AccessToken {
 // }
 #[derive(Deserialize, Clone)]
 struct IdToken {
-    // exp: usize, // expiry time (UNIX timestamp)
+    exp: u64, // expiry time (UNIX timestamp)
     // iss: String, // the issuer of the token, should be: https://localhost/realms/myrealm
     // aud: String, // audience (the client / app acting on behalf of the user), should be: my-confidential-client
     sub: String, // the subject of the token (whom the token refers to), the user's UUID
@@ -127,10 +128,13 @@ impl Authenticator {
         match (maybe_access_data, maybe_id_data) {
             (Ok(access_token_data), Ok(id_token_data)) => {
 
+                let expires_at = min(access_token_data.claims.exp, id_token_data.claims.exp);
+
                 let user = User {
                     name: access_token_data.claims.preferred_username,
                     id: id_token_data.claims.sub.parse().unwrap(),
                     roles: access_token_data.claims.realm_access.roles.clone(),
+                    expires_at,
                 };
 
                 let token = self.state.generate_token(32);

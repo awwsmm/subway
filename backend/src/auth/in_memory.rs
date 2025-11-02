@@ -3,6 +3,7 @@ use crate::auth::{AuthenticatorLike, AuthenticatorState, Token, User};
 use std::fs::File;
 use std::hash::{DefaultHasher, Hash, Hasher};
 use std::io::BufReader;
+use std::time::{SystemTime, UNIX_EPOCH};
 use uuid::Uuid;
 
 pub(crate) struct Authenticator {
@@ -45,6 +46,8 @@ impl AuthenticatorLike for Authenticator {
                             name: user.username.clone(),
                             id,
                             roles: user.realm_roles.clone(),
+                            // TODO parameterize token lifetime, currently hard-coded to 30 seconds
+                            expires_at: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs() + 30,
                         };
 
                         let token = self.state.generate_token(32);

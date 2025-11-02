@@ -8,6 +8,7 @@ use rand::prelude::*;
 use salvo::{Response, Scribe};
 use std::collections::HashMap;
 use std::hash::Hash;
+use std::time::{SystemTime, UNIX_EPOCH};
 use uuid::Uuid;
 
 #[derive(Clone, Debug)]
@@ -15,6 +16,7 @@ pub(crate) struct User {
     pub(crate) name: String,
     pub(crate) id: Uuid,
     pub(crate) roles: Vec<String>,
+    pub(crate) expires_at: u64, // UNIX timestamp
 }
 
 #[derive(PartialEq, Eq, Hash, Clone, Debug)]
@@ -53,8 +55,17 @@ impl AuthenticatorState {
         Token(STANDARD.encode(&random_bytes))
     }
 
-    pub(crate) fn get_user(&self, token: Token) -> Option<User> {
-        self.map.get(&token).cloned()
+    pub(crate) fn get_user(&mut self, token: Token) -> Option<User> {
+        let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs();
+        match self.map.get(&token) {
+            Some(user) if user.expires_at > now => {
+                Some(user.clone())
+            }
+            _ => {
+                self.map.remove(&token);
+                None
+            },
+        }
     }
 }
 
@@ -76,7 +87,7 @@ impl Authenticator {
         }
     }
 
-    pub(crate) fn get_user(&self, token: Token) -> Option<User> {
+    pub(crate) fn get_user(&mut self, token: Token) -> Option<User> {
         match self {
             Authenticator::Keycloak(x) => x.state.get_user(token),
             Authenticator::InMemory(x) => x.state.get_user(token),

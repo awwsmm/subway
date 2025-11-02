@@ -28,7 +28,7 @@ impl Handler for Auth {
             Some(token_header) => {
                 let token = Token::new(String::from(token_header));
                 let state = depot.obtain::<Arc<Mutex<Authenticator>>>().unwrap();
-                let auth = state.lock().await;
+                let mut auth = state.lock().await;
                 auth.get_user(token)
             }
         };
