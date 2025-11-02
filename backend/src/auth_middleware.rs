@@ -1,4 +1,4 @@
-use crate::auth::{Authenticator, Token};
+use crate::auth::{Authenticators, Token};
 use salvo::prelude::*;
 use std::sync::Arc;
 use tokio::sync::Mutex;
@@ -27,7 +27,7 @@ impl Handler for Auth {
 
             Some(token_header) => {
                 let token = Token::new(String::from(token_header));
-                let state = depot.obtain::<Arc<Mutex<Authenticator>>>().unwrap();
+                let state = depot.obtain::<Arc<Mutex<Authenticators>>>().unwrap();
                 let auth = state.lock().await;
                 auth.get_user(token)
             }

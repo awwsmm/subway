@@ -1,4 +1,4 @@
-use crate::auth::Authenticator;
+use crate::auth::{AuthenticatorState, Authenticators};
 use reqwest::StatusCode;
 use salvo::oapi::{endpoint, ToSchema};
 use salvo::{Depot, Request, Response};
@@ -14,7 +14,7 @@ struct Credentials {
 
 #[endpoint]
 pub(crate) async fn login(req: &mut Request, depot: &mut Depot, res: &mut Response) {
-    let state = depot.obtain::<Arc<Mutex<Authenticator>>>().unwrap();
+    let state = depot.obtain::<Arc<Mutex<Authenticators>>>().unwrap();
 
     match req.parse_json::<Credentials>().await {
         Ok(credentials) => {
