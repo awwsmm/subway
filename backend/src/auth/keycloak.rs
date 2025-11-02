@@ -1,6 +1,7 @@
 use crate::auth::{AuthenticatorLike, AuthenticatorState, Token, User};
-use jsonwebtoken::{decode, decode_header, Algorithm, DecodingKey, Validation};
+use jsonwebtoken::{decode, decode_header, Algorithm, DecodingKey, TokenData, Validation};
 use reqwest::{Client, ClientBuilder};
+use serde::de::DeserializeOwned;
 use serde::Deserialize;
 use std::cmp::min;
 use std::sync::Arc;
@@ -84,6 +85,38 @@ impl Authenticator {
         }
     }
 
+    async fn decode_and_validate<T: DeserializeOwned + Clone>(
+        &self,
+        jwt: &str,
+        realm: &str,
+        validation: Validation,
+    ) -> Result<TokenData<T>, String> {
+
+        let header = decode_header(jwt).unwrap();
+
+        // TODO container name and port and realm name here should be env vars
+        let jwk_url = format!("https://subway-keycloak:8443/realms/{}/protocol/openid-connect/certs", realm);
+
+        #[derive(Deserialize, Debug)]
+        struct Key {
+            kid: String,
+            n: String,
+            e: String,
+        }
+
+        #[derive(Deserialize, Debug)]
+        struct JWKs {
+            keys: Vec<Key>
+        }
+
+        let jwks = self.client.get(jwk_url).bearer_auth(jwt).send().await.unwrap().json::<JWKs>().await.unwrap();
+        let jwk = jwks.keys.iter().find(|arr| arr.kid == header.kid.clone().unwrap()).unwrap();
+        let decoding_key = Arc::new(DecodingKey::from_rsa_components(jwk.n.as_str(), jwk.e.as_str()).unwrap());
+
+        // validates token, signature, and claims (exp, aud, iss)
+        decode::<T>(jwt, &decoding_key, &validation).map_err(|e| e.to_string())
+    }
+
     pub(crate) async fn login_with_tokens(
         &mut self,
         access_token: &str,
@@ -91,43 +124,23 @@ impl Authenticator {
         realm: &str
     ) -> Result<Token, String> {
 
-        let header = decode_header(access_token).unwrap();
-        println!("looking for kid: {:?}", header.kid);
+        // validate token, signature, and claims (exp, aud, iss)
 
-        // TODO container name and port here should be env vars
-        let jwk_url = format!("https://subway-keycloak:8443/realms/{}/protocol/openid-connect/certs", realm);
+        println!("validating access_token: {:?}", access_token);
 
-        let jwks: serde_json::Value = self.client
-            .get(jwk_url)
-            .bearer_auth(access_token)
-            .send().await.unwrap().json().await.unwrap();
+        let mut validation = Validation::new(Algorithm::RS256);
+        validation.set_issuer(&["https://localhost:8443/realms/myrealm"]);
+        let maybe_access_data = self.decode_and_validate::<AccessToken>(access_token, realm, validation).await;
 
-        println!("JWKs found: {:?}", jwks);
+        println!("validating id_token: {:?}", id_token);
 
-        // Use the first key from the JWKs (in real use, you should match "kid")
-        let jwk = jwks["keys"].as_array().unwrap().iter()
-            .find(|arr| {
-                arr.as_object().unwrap().get("kid").unwrap().as_str().unwrap() == header.kid.clone().unwrap()
-            }).unwrap();
-
-        let n = jwk["n"].as_str().unwrap();
-        let e = jwk["e"].as_str().unwrap();
-        let decoding_key = Arc::new(DecodingKey::from_rsa_components(n, e).unwrap());
-
-        let access_token_validation = Validation::new(Algorithm::RS256);
-
-        let maybe_access_data = decode::<AccessToken>(access_token, &decoding_key, &access_token_validation);
-
-        let client = "my-confidential-client";
-
-        let mut id_token_validation = Validation::new(Algorithm::RS256);
-        id_token_validation.set_audience(&[client]);
-
-        let maybe_id_data = decode::<IdToken>(id_token, &decoding_key, &id_token_validation);
+        let mut validation = Validation::new(Algorithm::RS256);
+        validation.set_audience(&["my-confidential-client"]);
+        validation.set_issuer(&["https://localhost:8443/realms/myrealm"]);
+        let maybe_id_data = self.decode_and_validate::<IdToken>(id_token, realm, validation).await;
 
         match (maybe_access_data, maybe_id_data) {
             (Ok(access_token_data), Ok(id_token_data)) => {
-
                 let expires_at = min(access_token_data.claims.exp, id_token_data.claims.exp);
 
                 let user = User {
@@ -138,9 +151,7 @@ impl Authenticator {
                 };
 
                 let token = self.state.generate_token(32);
-
                 println!("inserting {:?} -> {:?}", token.clone(), user);
-
                 self.state.map.insert(token.clone(), user);
 
                 Ok(token)
@@ -154,18 +165,6 @@ impl Authenticator {
 
 impl AuthenticatorLike for Authenticator {
     async fn login(&mut self, username: String, password: String) -> Result<Token, String> {
-
-        // TODO FIXME -- here, we need to call Keycloak to get access token, id token, etc.
-        // base this off of what's currently happening in keycloak_auth_middleware.rs
-
-        // export KC_UNAME="bob"; export KC_PWD=$KC_UNAME; \
-        //  eval $(curl -k -X POST https://localhost/realms/myrealm/protocol/openid-connect/token \
-        //   -d "client_id=my-confidential-client" \
-        //   -d "client_secret=my-client-secret" \
-        //   -d "grant_type=password" \
-        //   -d "username=$KC_UNAME" \
-        //   -d "password=$KC_PWD" \
-        //   -d "scope=openid"
 
         // TODO host name and port and realm here should be env vars
         let url = "https://subway-keycloak:8443/realms/myrealm/protocol/openid-connect/token";
@@ -184,34 +183,15 @@ impl AuthenticatorLike for Authenticator {
             ("scope", String::from("openid")),
         ];
 
-        let response: serde_json::Value = client
-            .post(url)
-            .form(&params)
-            .send().await.unwrap().json().await.unwrap();
+        #[derive(Deserialize)]
+        struct Response {
+            access_token: String,
+            id_token: String,
+        }
 
-        let access_token_header = response["access_token"].as_str();
-        let id_token_header = response["id_token"].as_str();
-        let realm_header = Some("myrealm"); // TODO parameterize
-
-        println!("header: {:?}", access_token_header);
-        println!("header: {:?}", id_token_header);
-        println!("header: {:?}", realm_header);
-
-        if access_token_header.is_none() {
-            Err(String::from("Missing or malformed keycloak_access_token header"))
-
-        } else if id_token_header.is_none() {
-            Err(String::from("Missing or malformed keycloak_id_token header"))
-
-        } else if realm_header.is_none() {
-            Err(String::from("Missing or malformed v header"))
-
-        } else {
-            let access_token = access_token_header.unwrap();
-            let id_token = id_token_header.unwrap();
-            let realm = realm_header.unwrap();
-
-            self.login_with_tokens(access_token, id_token, realm).await
+        match client.post(url).form(&params).send().await.unwrap().json::<Response>().await {
+            Ok(r) => self.login_with_tokens(r.access_token.as_str(), r.id_token.as_str(), "myrealm").await,
+            Err(e) => Err(format!("error parsing Keycloak response: {}", e)),
         }
     }
 }
