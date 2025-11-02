@@ -102,9 +102,7 @@ LoginPage with the dummy users `admin` (password `admin`), `bob` (password `bob`
 
 ### protected endpoints
 
-> Note: this currently only works for [containerized](#containerized) development.
-
-There is a protected endpoint at https://localhost:7878/user-only
+There is a protected backend endpoint at https://localhost:7878/user-only
 
 If you try to access it unauthorized...
 
@@ -115,26 +113,19 @@ curl -k https://localhost:7878/user-only
 ...you will get a response like
 
 ```
-Missing or malformed keycloak_access_token header
+Missing or malformed x-token header
 ```
 
-You must first acquire an auth token and an id token from Keycloak (which must also be running)
+You must first acquire a token via the `/login` endpoint to proceed
 
 ```shell
-export KC_UNAME="bob"; export KC_PWD=$KC_UNAME; \
- eval $(curl -k -X POST https://localhost/realms/myrealm/protocol/openid-connect/token \
-  -d "client_id=my-confidential-client" \
-  -d "client_secret=my-client-secret" \
-  -d "grant_type=password" \
-  -d "username=$KC_UNAME" \
-  -d "password=$KC_PWD" \
-  -d "scope=openid" | jq -r '"export ATOKEN=\(.access_token) ITOKEN=\(.id_token)"')
+export TOKEN=$(curl -k -X POST -H "Content-Type: application/json" -d '{"username":"bob","password":"bob"}' https://localhost:7878/login)
 ```
 
 You can then `curl` this endpoint like
 
 ```shell
-curl -H "x-keycloak-access-token: $ATOKEN" -H "x-keycloak-id-token: $ITOKEN" -H "x-keycloak-realm: myrealm" -k https://localhost:7878/user-only
+curl -k -H "x-token: $TOKEN" https://localhost:7878/user-only
 ```
 
 You should receive a response like
@@ -146,20 +137,13 @@ welcome, bob!
 Similarly, there is an `admin-only` endpoint, which can only be accessed by the `admin` user
 
 ```shell
-export KC_UNAME="admin"; export KC_PWD=$KC_UNAME; \
- eval $(curl -k -X POST https://localhost/realms/myrealm/protocol/openid-connect/token \
-  -d "client_id=my-confidential-client" \
-  -d "client_secret=my-client-secret" \
-  -d "grant_type=password" \
-  -d "username=$KC_UNAME" \
-  -d "password=$KC_PWD" \
-  -d "scope=openid" | jq -r '"export ATOKEN=\(.access_token) ITOKEN=\(.id_token)"')
+export TOKEN=$(curl -k -X POST -H "Content-Type: application/json" -d '{"username":"admin","password":"admin"}' https://localhost:7878/login)
 ```
 
 You can then `curl` this endpoint like
 
 ```shell
-curl -H "x-keycloak-access-token: $ATOKEN" -H "x-keycloak-id-token: $ITOKEN" -H "x-keycloak-realm: myrealm" -k https://localhost:7878/admin-only
+curl -k -H "x-token: $TOKEN" https://localhost:7878/admin-only
 ```
 
 You should receive a response like

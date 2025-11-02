@@ -31,6 +31,12 @@ impl Scribe for Token {
     }
 }
 
+impl Token {
+    pub(crate) fn new(raw: String) -> Self {
+        Self(raw)
+    }
+}
+
 #[derive(Debug, Deserialize, Clone)]
 struct Roles {
     roles: Vec<String>,
@@ -287,7 +293,7 @@ impl Authenticator {
         Token(STANDARD.encode(&random_bytes))
     }
 
-    fn get_user(&self, token: Token) -> Option<User> {
+    pub(crate) fn get_user(&self, token: Token) -> Option<User> {
         self.state.get(&token).cloned()
     }
 }

@@ -1,14 +1,14 @@
 mod db;
 mod model;
 mod handlers;
-mod keycloak_auth_middleware;
+mod auth_middleware;
 mod config;
 mod auth;
 
 use crate::auth::Authenticator;
 use crate::config::Config;
 use crate::db::Database;
-use crate::keycloak_auth_middleware::KeycloakAuth;
+use crate::auth_middleware::Auth;
 use salvo::catcher::Catcher;
 use salvo::conn::rustls::{Keycert, RustlsConfig};
 use salvo::cors::Cors;
@@ -134,19 +134,19 @@ async fn main() {
                 )
                 .push(
                     Router::with_path("posts")
-                        .hoop(KeycloakAuth::new(&["user"]))
+                        .hoop(Auth::new(&["user"]))
                         .post(handlers::posts::post::many)
                 )
                 .push(
                     // this is an admin-only route
                     Router::with_path("/admin-only")
-                        .hoop(KeycloakAuth::new(&["admin"]))
+                        .hoop(Auth::new(&["admin"]))
                         .get(handlers::misc::admin_only::admin_only)
                 )
                 .push(
                     // this is a user-only route
                     Router::with_path("/user-only")
-                        .hoop(KeycloakAuth::new(&["user"]))
+                        .hoop(Auth::new(&["user"]))
                         .get(handlers::misc::user_only::user_only)
                 )
         ).catcher(catcher)

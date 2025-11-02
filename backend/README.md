@@ -37,44 +37,53 @@ Do not use hot reloading when
 
 ## examples
 
-Test the database by writing to it and reading from it. Create one or more `Post`s with random `id`s by executing
-
-> TODO: this currently does not work, as this `POST` endpoint pulls post author information from the Keycloak access token. Running this without Keycloak, therefore, fails.
+Get an authentication token by sending a dummy user's username and password to the `/login` endpoint
 
 ```shell
-curl -X POST -k https://localhost:7878/posts \
-  --header "Content-Type: application/json" \
-  --data '[{"title": "hello, world!"},{"title": "second post"}]'
+export TOKEN=$(curl -k -X POST -H "Content-Type: application/json" -d '{"username":"bob","password":"bob"}' https://localhost:7878/login)
+```
+
+Available example users include "bob", "clara" (password: "clara"), and "admin" (password: "admin").
+
+Test the database by writing to it and reading from it. Create one or more `Post`s with random `id`s by executing
+
+```shell
+curl -k -X POST https://localhost:7878/posts \
+  -H "x-token: $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '[{"title":"title 1","body":"body 1"},{"title":"title 2","body":"body 2"}]'
 ```
 
 That will print output like
 
 ```
-added new Post to table with ids: [bd130f53-484a-4aed-a268-847cfca662cd, 1590e22e-825d-42a5-a794-9655df593465]
+added new Post to table with ids: [f417304a-d2a6-4a91-acfe-fbf9c51e6b86, bd58a9d6-5b0b-43cb-b6ca-d9e6bed66570]
 ```
 
 Retrieve a Post by executing
 
 ```shell
-curl localhost:7878/post/get/bd130f53-484a-4aed-a268-847cfca662cd
+curl -k https://localhost:7878/posts/f417304a-d2a6-4a91-acfe-fbf9c51e6b86
 ```
 
 (`-X GET` is assumed by default with `curl` and can be omitted) which will give output like
 
 ```
-{"id":"bd130f53-484a-4aed-a268-847cfca662cd","title":"hello, world!"}
+{"post_id":"f417304a-d2a6-4a91-acfe-fbf9c51e6b86","author_id":"1943fdc4-8c3b-3d3e-b929-05cd04c8ca82","title":"title 1","body":"body 1"}
 ```
+
+The `post_id` is an auto-generated random ID associated with this new post. The `author_id` is a unique ID associated with the author of the post (in this case, "bob").
 
 You can also list all Posts (up to some limit) with
 
 ```shell
-curl localhost:7878/posts\?limit=5
+curl -k https://localhost:7878/posts\?limit=5
 ```
 
 (`\?` is required instead of `?` in a shell) which will return the Posts as a JSON list
 
 ```
-[{"id":"3c999d9a-aef6-40a2-a276-3ab6bfba1049","title":"default title"},{"id":"2a71a9f9-604a-4629-a982-3605f94edf44","title":"default title"},{"id":"f3f0b8ef-8b34-4ec6-a8dd-b89ff90fc8bc","title":"default title"},{"id":"811d568b-acc1-4727-943c-8ac7e8177182","title":"default title"},{"id":"1f0f411d-195f-41aa-87c2-a8bffcc9cd64","title":"default title"}]
+[{"post_id":"f417304a-d2a6-4a91-acfe-fbf9c51e6b86","author_id":"1943fdc4-8c3b-3d3e-b929-05cd04c8ca82","title":"title 1","body":"body 1"},{"post_id":"bd58a9d6-5b0b-43cb-b6ca-d9e6bed66570","author_id":"1943fdc4-8c3b-3d3e-b929-05cd04c8ca82","title":"title 2","body":"body 2"}]
 ```
 
 Note that, due to the in-memory nature of the database, all records are wiped when the application is shut down. If you want a persistent database, you'll need Docker. Check out the root [README](../README.md) for more information.
