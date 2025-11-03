@@ -128,6 +128,7 @@ impl Authenticator {
 
         println!("validating access_token: {:?}", access_token);
 
+        // TODO define list of known issuers and audiences in config, rather than hard-coding here
         let mut validation = Validation::new(Algorithm::RS256);
         validation.set_issuer(&["https://localhost:8443/realms/myrealm"]);
         let maybe_access_data = self.decode_and_validate::<AccessToken>(access_token, realm, validation).await;
@@ -151,6 +152,7 @@ impl Authenticator {
                 };
 
                 let token = self.state.generate_token(32);
+                // TODO implement a proper logging solution
                 println!("inserting {:?} -> {:?}", token.clone(), user);
                 self.state.map.insert(token.clone(), user);
 
@@ -174,12 +176,14 @@ impl AuthenticatorLike for Authenticator {
             .build()
             .unwrap();
 
+        // TODO do away with this "direct access grant" pattern and use "Authorization Code Flow" instead
         let params = [
             ("client_id", String::from("my-confidential-client")),
             ("client_secret", String::from("my-client-secret")),
             ("grant_type", String::from("password")),
             ("username", username),
             ("password", password),
+            // TODO clean up grants to avoid requiring both id and access tokens and this scope, below
             ("scope", String::from("openid")),
         ];
 
@@ -190,6 +194,7 @@ impl AuthenticatorLike for Authenticator {
         }
 
         match client.post(url).form(&params).send().await.unwrap().json::<Response>().await {
+            // TODO fix this hard-coded realm, below
             Ok(r) => self.login_with_tokens(r.access_token.as_str(), r.id_token.as_str(), "myrealm").await,
             Err(e) => Err(format!("error parsing Keycloak response: {}", e)),
         }

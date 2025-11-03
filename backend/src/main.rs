@@ -133,6 +133,7 @@ async fn main() {
                     let router = Router::new()
                         .push(Router::with_path("login").post(handlers::login::username_and_password::login));
 
+                    // TODO parse auth.mode string to an AuthMode _once_, above, and panic up there instead of down here
                     match config.auth.mode.as_str() {
                         "keycloak" => router
                             .push(Router::with_path("login-keycloak").get(handlers::login::keycloak_token::login)),

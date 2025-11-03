@@ -1,12 +1,12 @@
 use crate::auth::Authenticator;
 use reqwest::StatusCode;
-use salvo::oapi::{endpoint, ToSchema};
+use salvo::oapi::endpoint;
 use salvo::{Depot, Request, Response};
 use serde::Deserialize;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
-#[derive(Deserialize, ToSchema)]
+#[derive(Deserialize)]
 struct Credentials {
     username: String,
     password: String,
@@ -33,6 +33,7 @@ pub(crate) async fn login(req: &mut Request, depot: &mut Depot, res: &mut Respon
                     // if their random string does not exist in the map, they must not be logged in
 
                     res.status_code(StatusCode::OK);
+                    // TODO return auth token bundled with expiration time in a JSON blob
                     res.render(auth_token);
                 }
                 Err(e) => {
