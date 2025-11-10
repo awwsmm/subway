@@ -17,6 +17,7 @@ struct ProtoPost {
 }
 
 /// Create one or more Posts.
+// TODO fully document all endpoints in this way, including response codes, etc.
 #[endpoint(
     request_body(
         content = Vec<ProtoPost>,
@@ -40,9 +41,9 @@ pub(crate) async fn many(req: &mut Request, depot: &mut Depot, res: &mut Respons
                 proto_posts.into_iter().map(|proto_post| {
                     <PostsByIdTableRow as From<Post>>::from(
                         Post::new(
-                            post::AuthorId::new(user_id.clone()),
-                            post::Title::new(proto_post.title),
-                            post::Body::new(proto_post.body),
+                            post::AuthorId(user_id.clone()),
+                            post::Title(proto_post.title),
+                            post::Body(proto_post.body),
                         )
                     )
                 }).collect()

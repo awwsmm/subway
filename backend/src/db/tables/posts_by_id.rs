@@ -4,7 +4,6 @@ use crate::model::post::Post;
 use diesel::{Insertable, Queryable, Selectable};
 use serde::Serialize;
 use std::fmt::Debug;
-use std::ops::Deref;
 use uuid::Uuid;
 
 #[derive(Clone, Debug, Serialize, Insertable, Queryable, Selectable)]
@@ -25,10 +24,10 @@ impl TableRow<Uuid> for PostsByIdTableRow {
 impl From<Post> for PostsByIdTableRow {
     fn from(value: Post) -> Self {
         Self {
-            post_id: value.post_id().deref().clone(),
-            author_id: value.author_id().deref().clone(),
-            title: value.title().deref().clone(),
-            body: value.body().deref().clone(),
+            post_id: value.post_id.0.clone(),
+            author_id: value.author_id.0.clone(),
+            title: value.title.0.clone(),
+            body: value.body.0.clone(),
         }
     }
 }
