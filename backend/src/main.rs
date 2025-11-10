@@ -23,6 +23,7 @@ use tokio::sync::Mutex;
 
 #[tokio::main]
 async fn main() {
+    println!("Starting subway-backend...");
 
     let cert = include_bytes!("../certs/cert.pem").to_vec();
     let key = include_bytes!("../certs/key.pem").to_vec();
