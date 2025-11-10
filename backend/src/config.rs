@@ -13,6 +13,7 @@ pub(crate) struct AuthConfig {
 }
 
 #[derive(Debug, Deserialize)]
+/// This application configuration is parsed from the `config.toml` file.
 pub(crate) struct Config {
     pub(crate) host: String,
     pub(crate) port: u16,
@@ -22,6 +23,8 @@ pub(crate) struct Config {
 
 impl Config {
     pub(crate) fn new(toml_file: &str) -> Self {
+
+        // panic if we cannot read the app config file
         let toml_content = fs::read_to_string(toml_file)
             .expect(format!("Failed to read {}", toml_file).as_str());
 

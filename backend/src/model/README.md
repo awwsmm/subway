@@ -8,8 +8,12 @@ The "site" is the entire website, composed of one or more pages.
 
 ## Page
 
-A "page" is a literal web page on the blog. A page may contain any sort of information. Most blog websites have multiple pages, where one of the pages is usually called the "blog" page, and contains all the blog posts.
+A "page" is a literal web page on the site. A page may contain any sort of information. Most blog websites have multiple pages, where one of the pages is usually called the "blog" page, and contains all the blog posts.
 
 ## Post
 
-A "post" is a single piece of content, like an article or a journal entry. A blog website usually contains many posts.
+A "post" is a single piece of content, like an article or a journal entry. A blog website usually contains many posts. Each post has an immutable ID.
+
+## Author
+
+An author is the creator of a post. Each author has an immutable ID.

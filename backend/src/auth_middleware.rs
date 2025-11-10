@@ -4,12 +4,12 @@ use std::sync::Arc;
 use tokio::sync::Mutex;
 
 #[derive(Clone)]
-pub struct Auth {
+pub(crate) struct Auth {
     roles: Vec<String>, // roles allowed to access this route
 }
 
 impl Auth {
-    pub fn new(roles: &[&str]) -> Self {
+    pub(crate) fn new(roles: &[&str]) -> Self {
         Self { roles: roles.iter().map(|s| s.to_string()).collect() }
     }
 }
