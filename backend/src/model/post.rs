@@ -1,6 +1,9 @@
 use uuid::Uuid;
 
-pub(crate) struct PostId(pub(crate) Uuid);
+// This type is public, but the field is private, so it cannot be constructed manually.
+// This is intentional -- it forces the user to use the new() method to create a Post.
+pub(crate) struct PostId(Uuid);
+
 pub(crate) struct AuthorId(pub(crate) Uuid);
 pub(crate) struct Title(pub(crate) String);
 pub(crate) struct Body(pub(crate) String);

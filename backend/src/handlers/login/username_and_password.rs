@@ -21,19 +21,9 @@ pub(crate) async fn login(req: &mut Request, depot: &mut Depot, res: &mut Respon
             let mut auth = state.lock().await;
             match auth.login(credentials.username, credentials.password).await {
                 Ok(auth_token) => {
-
-                    // at this point, I have
-                    // - their username, their password, their user UUID, their roles
-                    // - the expiry time of the token, all tokens and auth, etc.
-                    //
-                    // I can hold all of this info in memory until the Keycloak auth expires
-                    // I just need to send them a random auth string that they send back to me
-                    // that random auth string is the key of a key-value pair in a HashMap
-                    // multiple users can be logged in at once
-                    // if their random string does not exist in the map, they must not be logged in
-
                     res.status_code(StatusCode::OK);
                     // TODO return auth token bundled with expiration time in a JSON blob
+                    //   so the user has visibility into when their token expires
                     res.render(auth_token);
                 }
                 Err(e) => {

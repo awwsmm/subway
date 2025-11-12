@@ -21,6 +21,8 @@ fn extract(header_name: &str, req: &Request, res: &mut Response) -> Option<Strin
 pub(crate) async fn login(req: &mut Request, depot: &mut Depot, res: &mut Response) {
     let state = depot.obtain::<Arc<Mutex<Authenticator>>>().unwrap();
 
+    // TODO put 'sub' (keycloak user UUID) in access_token to make id token unnecessary
+    // TODO put realm name in access_token to make realm token unnecessary
     let Some(access_token) = extract("x-keycloak-access-token", req, res) else { return };
     let Some(id_token) = extract("x-keycloak-id-token", req, res) else { return };
     let Some(realm) = extract("x-keycloak-realm", req, res) else { return };

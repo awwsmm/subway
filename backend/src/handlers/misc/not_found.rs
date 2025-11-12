@@ -3,7 +3,7 @@ use salvo::{handler, FlowCtrl, Response};
 use salvo::http::StatusCode;
 use salvo::prelude::Text;
 
-/// Handler that takes the user ot a default 404.html page.
+/// Handler that takes the user to a default 404.html page.
 #[handler]
 pub(crate) async fn not_found(&self, res: &mut Response, ctrl: &mut FlowCtrl) {
     if StatusCode::NOT_FOUND == res.status_code.unwrap_or(StatusCode::NOT_FOUND) {

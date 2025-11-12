@@ -3,6 +3,7 @@ use salvo::prelude::Text;
 use salvo::{Depot, Response};
 
 /// Endpoint which can only be called by an authenticated user.
+// Note that auth barriers are defined in the Router (main.rs) not in the endpoint itself.
 #[endpoint]
 pub(crate) async fn user_only(depot: &mut Depot, res: &mut Response) {
     let username = depot.get::<String>("token_user_name").cloned().unwrap_or(String::from("friend"));
