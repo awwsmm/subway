@@ -1,4 +1,4 @@
-use crate::auth::{Authenticator, Token};
+use crate::auth::{Authenticator, AuthenticatorLike, Token};
 use salvo::prelude::*;
 use std::sync::Arc;
 use tokio::sync::Mutex;

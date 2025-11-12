@@ -3,74 +3,11 @@ use jsonwebtoken::{decode, decode_header, Algorithm, DecodingKey, TokenData, Val
 use reqwest::{Client, ClientBuilder};
 use serde::de::DeserializeOwned;
 use serde::Deserialize;
-use std::cmp::min;
 use std::sync::Arc;
 
-#[derive(Deserialize, Clone)]
-struct Roles {
-    roles: Vec<String>,
-}
-
-// example decoded access_token
-//
-// {
-//   "exp": 1760906329,
-//   "iat": 1760906029,
-//   "jti": "onrtro:61b2bdd0-d403-9f89-5e99-cea205794395",
-//   "iss": "https://localhost/realms/myrealm",
-//   "typ": "Bearer",
-//   "azp": "my-confidential-client",
-//   "sid": "652809cd-9f35-492e-b358-f040bf4dd3b1",
-//   "realm_access": {
-//     "roles": [
-//       "user"
-//     ]
-//   },
-//   "scope": "openid profile",
-//   "name": "Bob User",
-//   "preferred_username": "bob",
-//   "given_name": "Bob",
-//   "family_name": "User"
-// }
-#[derive(Deserialize, Clone)]
-struct AccessToken {
-    exp: u64, // expiry time (UNIX timestamp)
-    // iss: String, // the issuer of the token, should be: https://localhost/realms/myrealm
-    // azp: String, // authorized party (the client / app acting on behalf of the user), should be: my-confidential-client
-    realm_access: Roles, // list of roles in the realm
-    preferred_username: String, // the user's (mutable) username
-}
-
-// example decoded id_token
-//
-// {
-//   "exp": 1760359940,
-//   "iat": 1760359640,
-//   "jti": "a0019df9-7370-0e74-c316-a613a6fc9783",
-//   "iss": "https://localhost/realms/myrealm",
-//   "aud": "my-confidential-client",
-//   "sub": "7f16300f-6063-41ef-9428-ced32ef5adad",
-//   "typ": "ID",
-//   "azp": "my-confidential-client",
-//   "sid": "7e675b31-9841-44e5-b4a4-44ae42bca6ca",
-//   "at_hash": "uHUl9PtVRuABezMMlDfjLQ",
-//   "name": "Bob User",
-//   "preferred_username": "bob",
-//   "given_name": "Bob",
-//   "family_name": "User"
-// }
-#[derive(Deserialize, Clone)]
-struct IdToken {
-    exp: u64, // expiry time (UNIX timestamp)
-    // iss: String, // the issuer of the token, should be: https://localhost/realms/myrealm
-    // aud: String, // audience (the client / app acting on behalf of the user), should be: my-confidential-client
-    sub: String, // the subject of the token (whom the token refers to), the user's UUID
-    // azp: String, // authorized party (the client / app acting on behalf of the user), should be: my-confidential-client
-    // preferred_username: String, // the user's (mutable) username
-}
 
 pub(crate) struct Authenticator {
-    pub(in crate::auth) state: AuthenticatorState,
+    state: AuthenticatorState,
     client: Client,
 }
 
@@ -126,37 +63,24 @@ impl Authenticator {
 
         // validate token, signature, and claims (exp, aud, iss)
 
-        println!("validating access_token: {:?}", access_token);
+        log::debug!("validating access_token: {:?}", access_token);
 
         // TODO define list of known issuers and audiences in config, rather than hard-coding here
         let mut validation = Validation::new(Algorithm::RS256);
         validation.set_issuer(&["https://localhost:8443/realms/myrealm"]);
-        let maybe_access_data = self.decode_and_validate::<AccessToken>(access_token, realm, validation).await;
+        let maybe_access_data = self.decode_and_validate::<keycloak::AccessToken>(access_token, realm, validation).await;
 
-        println!("validating id_token: {:?}", id_token);
+        log::debug!("validating id_token: {:?}", id_token);
 
         let mut validation = Validation::new(Algorithm::RS256);
         validation.set_audience(&["my-confidential-client"]);
         validation.set_issuer(&["https://localhost:8443/realms/myrealm"]);
-        let maybe_id_data = self.decode_and_validate::<IdToken>(id_token, realm, validation).await;
+        let maybe_id_data = self.decode_and_validate::<keycloak::IdToken>(id_token, realm, validation).await;
 
         match (maybe_access_data, maybe_id_data) {
             (Ok(access_token_data), Ok(id_token_data)) => {
-                let expires_at = min(access_token_data.claims.exp, id_token_data.claims.exp);
-
-                let user = User {
-                    name: access_token_data.claims.preferred_username,
-                    id: id_token_data.claims.sub.parse().unwrap(),
-                    roles: access_token_data.claims.realm_access.roles.clone(),
-                    expires_at,
-                };
-
-                let token = self.state.generate_token(32);
-                // TODO implement a proper logging solution
-                println!("inserting {:?} -> {:?}", token.clone(), user);
-                self.state.map.insert(token.clone(), user);
-
-                Ok(token)
+                let user = keycloak::user_from(access_token_data.claims, id_token_data.claims);
+                Ok(self.state.add_user(user))
             }
             _ => {
                 Err(String::from("invalid tokens"))
@@ -197,6 +121,90 @@ impl AuthenticatorLike for Authenticator {
             // TODO fix this hard-coded realm, below
             Ok(r) => self.login_with_tokens(r.access_token.as_str(), r.id_token.as_str(), "myrealm").await,
             Err(e) => Err(format!("error parsing Keycloak response: {}", e)),
+        }
+    }
+
+    fn get_user(&mut self, token: Token) -> Option<User> {
+        self.state.get_user(token)
+    }
+}
+
+mod keycloak {
+    use crate::auth::User;
+    use serde::Deserialize;
+    use std::cmp::min;
+
+    #[derive(Deserialize, Clone)]
+    struct Roles {
+        pub(in crate::auth::keycloak) roles: Vec<String>,
+    }
+
+    // example decoded access_token
+    //
+    // {
+    //   "exp": 1760906329,
+    //   "iat": 1760906029,
+    //   "jti": "onrtro:61b2bdd0-d403-9f89-5e99-cea205794395",
+    //   "iss": "https://localhost/realms/myrealm",
+    //   "typ": "Bearer",
+    //   "azp": "my-confidential-client",
+    //   "sid": "652809cd-9f35-492e-b358-f040bf4dd3b1",
+    //   "realm_access": {
+    //     "roles": [
+    //       "user"
+    //     ]
+    //   },
+    //   "scope": "openid profile",
+    //   "name": "Bob User",
+    //   "preferred_username": "bob",
+    //   "given_name": "Bob",
+    //   "family_name": "User"
+    // }
+    #[derive(Deserialize, Clone)]
+    pub(in crate::auth::keycloak) struct AccessToken {
+        exp: u64, // expiry time (UNIX timestamp)
+        // iss: String, // the issuer of the token, should be: https://localhost/realms/myrealm
+        // azp: String, // authorized party (the client / app acting on behalf of the user), should be: my-confidential-client
+        realm_access: Roles, // list of roles in the realm
+        preferred_username: String, // the user's (mutable) username
+    }
+
+    // example decoded id_token
+    //
+    // {
+    //   "exp": 1760359940,
+    //   "iat": 1760359640,
+    //   "jti": "a0019df9-7370-0e74-c316-a613a6fc9783",
+    //   "iss": "https://localhost/realms/myrealm",
+    //   "aud": "my-confidential-client",
+    //   "sub": "7f16300f-6063-41ef-9428-ced32ef5adad",
+    //   "typ": "ID",
+    //   "azp": "my-confidential-client",
+    //   "sid": "7e675b31-9841-44e5-b4a4-44ae42bca6ca",
+    //   "at_hash": "uHUl9PtVRuABezMMlDfjLQ",
+    //   "name": "Bob User",
+    //   "preferred_username": "bob",
+    //   "given_name": "Bob",
+    //   "family_name": "User"
+    // }
+    #[derive(Deserialize, Clone)]
+    pub(in crate::auth::keycloak) struct IdToken {
+        exp: u64, // expiry time (UNIX timestamp)
+        // iss: String, // the issuer of the token, should be: https://localhost/realms/myrealm
+        // aud: String, // audience (the client / app acting on behalf of the user), should be: my-confidential-client
+        sub: String, // the subject of the token (whom the token refers to), the user's UUID
+        // azp: String, // authorized party (the client / app acting on behalf of the user), should be: my-confidential-client
+        // preferred_username: String, // the user's (mutable) username
+    }
+
+    pub(in crate::auth::keycloak) fn user_from(access_token: AccessToken, id_token: IdToken) -> User {
+        let expires_at = min(access_token.exp, id_token.exp);
+
+        User {
+            name: access_token.preferred_username,
+            id: id_token.sub.parse().unwrap(),
+            roles: access_token.realm_access.roles.clone(),
+            expires_at,
         }
     }
 }

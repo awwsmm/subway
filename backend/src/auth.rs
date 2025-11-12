@@ -10,6 +10,7 @@ use std::hash::Hash;
 use std::time::{SystemTime, UNIX_EPOCH};
 use uuid::Uuid;
 
+/// User information is held in memory until it expires.
 #[derive(Clone, Debug)]
 pub(crate) struct User {
     pub(crate) name: String,
@@ -18,6 +19,7 @@ pub(crate) struct User {
     pub(crate) expires_at: u64, // UNIX timestamp
 }
 
+/// A token is associated with every unique, authenticated user session.
 #[derive(PartialEq, Eq, Hash, Clone, Debug)]
 pub(crate) struct Token(String);
 
@@ -33,11 +35,15 @@ impl Token {
     }
 }
 
-pub(crate) struct AuthenticatorState {
+/// The AuthenticatorState holds a list of currently-logged-in users in memory.
+pub(in crate::auth) struct AuthenticatorState {
     rand: StdRng,
     map: HashMap<Token, User>, // TODO replace with a cache? Redis? ValKey?
 }
 
+/// AuthenticatorState is basically just a fancy HashMap which
+/// - auto-generates keys (Tokens) on insert
+/// - auto-removes expired values (Users) on access
 impl AuthenticatorState {
 
     pub(crate) fn new() -> Self {
@@ -47,14 +53,19 @@ impl AuthenticatorState {
         }
     }
 
-    /// Generates a random base64 token to associate with user info saved in memory.
     fn generate_token(&mut self, n_bytes: usize) -> Token {
         let mut random_bytes = vec![0u8; n_bytes];
         self.rand.fill_bytes(&mut random_bytes);
         Token(STANDARD.encode(&random_bytes))
     }
 
-    pub(crate) fn get_user(&mut self, token: Token) -> Option<User> {
+    fn add_user(&mut self, user: User) -> Token {
+        let token = self.generate_token(32);
+        self.map.insert(token.clone(), user);
+        token
+    }
+
+    fn get_user(&mut self, token: Token) -> Option<User> {
         let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs();
         match self.map.get(&token) {
             Some(user) if user.expires_at > now => {
@@ -68,10 +79,7 @@ impl AuthenticatorState {
     }
 }
 
-pub(crate) trait AuthenticatorLike {
-    async fn login(&mut self, username: String, password: String) -> Result<Token, String>;
-}
-
+/// All implemented Authenticators are listed here.
 pub(crate) enum Authenticator {
     Keycloak(keycloak::Authenticator),
     InMemory(in_memory::Authenticator),
@@ -85,18 +93,28 @@ impl Authenticator {
             _ => panic!("Unsupported auth mode: {}", mode),
         }
     }
+}
 
-    pub(crate) fn get_user(&mut self, token: Token) -> Option<User> {
-        match self {
-            Authenticator::Keycloak(x) => x.state.get_user(token),
-            Authenticator::InMemory(x) => x.state.get_user(token),
-        }
-    }
+/// Every Authenticator should provide
+/// - the ability to login, and
+/// - the ability to get information about a logged-in user
+pub(crate) trait AuthenticatorLike {
+    async fn login(&mut self, username: String, password: String) -> Result<Token, String>;
+    fn get_user(&mut self, token: Token) -> Option<User>;
+}
 
-    pub(crate) async fn login(&mut self, username: String, password: String) -> Result<Token, String> {
+impl AuthenticatorLike for Authenticator {
+    async fn login(&mut self, username: String, password: String) -> Result<Token, String> {
         match self {
             Authenticator::Keycloak(x) => x.login(username, password).await,
             Authenticator::InMemory(x) => x.login(username, password).await,
+        }
+    }
+
+    fn get_user(&mut self, token: Token) -> Option<User> {
+        match self {
+            Authenticator::Keycloak(x) => x.get_user(token),
+            Authenticator::InMemory(x) => x.get_user(token),
         }
     }
 }

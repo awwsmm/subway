@@ -6,7 +6,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use uuid::Uuid;
 
 pub(crate) struct Authenticator {
-    pub(in crate::auth) state: AuthenticatorState,
+    state: AuthenticatorState,
 }
 
 impl Authenticator {
@@ -48,15 +48,15 @@ impl AuthenticatorLike for Authenticator {
                             expires_at: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs() + 30,
                         };
 
-                        let token = self.state.generate_token(32);
-                        println!("inserting {:?} -> {:?}", token.clone(), user);
-                        self.state.map.insert(token.clone(), user);
-
-                        Ok(token)
+                        Ok(self.state.add_user(user))
                     }
                 }
             }
         }
+    }
+
+    fn get_user(&mut self, token: Token) -> Option<User> {
+        self.state.get_user(token)
     }
 }
 

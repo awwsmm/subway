@@ -1,4 +1,4 @@
-use crate::auth::Authenticator;
+use crate::auth::{Authenticator, AuthenticatorLike};
 use reqwest::StatusCode;
 use salvo::oapi::endpoint;
 use salvo::{Depot, Request, Response};
