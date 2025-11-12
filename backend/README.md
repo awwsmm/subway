@@ -16,7 +16,7 @@ and then visit https://localhost:7878/hello in a browser to see a web page.
 
 Visit https://localhost:7878/does-not-exist to see the 404 page.
 
-Visit https://localhost:7878/swagger-ui to see the API documentation.
+Visit https://localhost:7878/api-doc to see the API documentation.
 
 Press <kbd>control</kbd> + <kbd>C</kbd> in the terminal to shut down the server.
 

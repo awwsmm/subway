@@ -145,9 +145,9 @@ async fn main() {
     // TODO consider replacing env!("CARGO_PKG_VERSION") with clap's crate_version macro
     let doc = OpenApi::new("test api", env!("CARGO_PKG_VERSION")).merge_router(&public_router);
 
-    let public_router = public_router
+    let public_router_with_openapi = public_router
         .push(doc.into_router("/api-doc/openapi.json"))
-        .push(SwaggerUi::new("/api-doc/openapi.json").into_router("swagger-ui"));
+        .push(SwaggerUi::new("/api-doc/openapi.json").into_router("api-doc"));
 
     // 404.html
     let catcher = Catcher::default().hoop(handlers::misc::not_found::not_found);
@@ -156,7 +156,7 @@ async fn main() {
 
     Server::new(acceptor).serve(
         Service::new(
-            public_router
+            public_router_with_openapi
                 .hoop(cors) // Apply the CORS middleware globally
                 .push({ // login flows
 
