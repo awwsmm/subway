@@ -3120,6 +3120,7 @@ dependencies = [
  "diesel",
  "diesel_migrations",
  "jsonwebtoken",
+ "log",
  "openssl-sys",
  "pq-sys",
  "rand 0.9.2",

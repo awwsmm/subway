@@ -23,28 +23,29 @@ use tokio::sync::Mutex;
 
 #[tokio::main]
 async fn main() {
-    println!("Starting subway-backend...");
+    log::debug!("Starting subway-backend...");
 
+    // TODO (config) move these file paths to config
     let cert = include_bytes!("../certs/cert.pem").to_vec();
     let key = include_bytes!("../certs/key.pem").to_vec();
-    println!("Loaded certs");
+    log::debug!("loaded TLS certificate and key files");
 
     let tls_config = RustlsConfig::new(Keycert::new().cert(cert.as_slice()).key(key.as_slice()));
-    println!("Configured TLS");
+    log::debug!("configured TLS");
 
     let config = Config::new("config.toml");
-    println!("Loaded config: {:?}", config);
+    log::info!("loaded config: {:?}", config);
 
     let host_port = format!("{}:{}", config.host, config.port);
     let listener = TcpListener::new(host_port.clone()).rustls(tls_config.clone());
-    println!("Created TCP Listener");
+    log::debug!("created TCP listener and bound to {}", host_port);
 
-    // Create QUIC listener and combine with TCP listener
+    // TODO (config) move this host and port to config
     let acceptor = QuinnListener::new(tls_config.build_quinn_config().unwrap(), ("0.0.0.0", 5800))
         .join(listener)
         .bind()
         .await;
-    println!("Created QUIC listener and bound to {}", host_port);
+    log::debug!("created QUIC listener and bound to {}", host_port);
 
     // TODO import regex package and enable this
     // PathFilter::register_wisp_regex(
@@ -52,9 +53,10 @@ async fn main() {
     //     Regex::new("[0-9a-fA-F]{8}-([0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}").unwrap(),
     // );
 
-    // TODO pull CORS configuration out into config.toml
+    // TODO (config) pull CORS configuration out into config.toml
     let origins = ["http://localhost:5173"];
 
+    // TODO (best practices) research and implement best practices for CORS here
     let cors = Cors::new()
         .allow_origin(origins) // Allow specific origins
         .allow_methods(vec![Method::GET, Method::POST, Method::PUT, Method::DELETE]) // Allow specific HTTP methods
@@ -63,8 +65,9 @@ async fn main() {
         .max_age(86400) // Cache preflight requests for 24 hours
         .into_handler();
 
-    println!("Configured CORS");
+    log::debug!("configured CORS");
 
+    /*
     // Endpoints always use the nouns from /model, as plural.
     //   reproduced from: https://stackoverflow.com/a/32257339/2925434
     //   For multiple resource items:
@@ -102,17 +105,19 @@ async fn main() {
     //
     // See https://salvo.rs/guide/concepts/request#retrieving-query-parameters
     //   to learn about extracting query parameters
+    */
 
     let public_router = Router::new()
         .hoop(affix_state::inject(Arc::new(Mutex::new(Database::new(config.db.mode.as_ref(), config.db.url.as_ref()))))) // add DB to state
         .hoop(affix_state::inject(Arc::new(Mutex::new(Authenticator::new(config.auth.mode.as_str()))))) // add auth to state
+        // TODO preface all of these with /v0/ before pushing to production for the first time
         .push(Router::with_path("hello").get(handlers::misc::hello::hello))
         .push(Router::with_path("posts").get(handlers::posts::get::many))
         .push(Router::with_path("posts/{id}").get(handlers::posts::get::one))
         .push(Router::with_path("health").get(handlers::health::check))
         ;
 
-    println!("Created router");
+    log::debug!("created router");
 
     // TODO consider replacing env!("CARGO_PKG_VERSION") with clap's crate_version macro
     let doc = OpenApi::new("test api", env!("CARGO_PKG_VERSION")).merge_router(&public_router);
@@ -121,9 +126,10 @@ async fn main() {
         .push(doc.into_router("/api-doc/openapi.json"))
         .push(SwaggerUi::new("/api-doc/openapi.json").into_router("swagger-ui"));
 
+    // 404.html
     let catcher = Catcher::default().hoop(handlers::misc::not_found::not_found);
 
-    println!("Added OpenAPI docs");
+    log::debug!("added OpenAPI docs UI to router");
 
     Server::new(acceptor).serve(
         Service::new(
