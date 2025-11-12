@@ -21,16 +21,39 @@ use tokio::sync::Mutex;
 // There should be no endpoint definitions here. The purpose of main.rs is just to wire up the
 // endpoint implementations, which themselves live in different files.
 
+fn read_file(path: &str) -> Result<String, Box<dyn std::error::Error>> {
+    use std::fs::File;
+    use std::io::Read;
+
+    let mut file = File::open(path)?;
+    let mut buffer = String::new();
+    file.read_to_string(&mut buffer)?;
+    Ok(buffer)
+}
+
 #[tokio::main]
 async fn main() {
     log::debug!("Starting subway-backend...");
 
-    // TODO (config) move these file paths to config
-    let cert = include_bytes!("../certs/cert.pem").to_vec();
-    let key = include_bytes!("../certs/key.pem").to_vec();
+    // TODO (config) move this file path to config
+    let cert_file_path = "../certs/cert.pem";
+    let cert = match read_file(cert_file_path) {
+        Ok(string) => string,
+        Err(e) => panic!("unable to read TLS certificate file: {}", e)
+    };
+
+    // TODO (config) move this file path to config
+    let key_file_path = "../certs/key.pem";
+    let key = match read_file(key_file_path) {
+        Ok(string) => string,
+        Err(e) => panic!("unable to read TLS key file: {}", e)
+    };
+
+    // let cert = include_bytes!("../certs/cert.pem").to_vec();
+    // let key = include_bytes!("../certs/key.pem").to_vec();
     log::debug!("loaded TLS certificate and key files");
 
-    let tls_config = RustlsConfig::new(Keycert::new().cert(cert.as_slice()).key(key.as_slice()));
+    let tls_config = RustlsConfig::new(Keycert::new().cert(cert).key(key));
     log::debug!("configured TLS");
 
     let config = Config::new("config.toml");

@@ -18,9 +18,6 @@ RUN cargo build --release
 # Now copy the source code
 COPY ./backend/src ./src
 
-# ...and the TLS certificate
-COPY ./backend/certs ./certs
-
 # ...and the DB migration code
 COPY ./backend/migrations ./migrations
 
@@ -36,9 +33,10 @@ WORKDIR /app/backend
 # Copy the built binary from the previous stage
 COPY --from=builder /usr/src/app/target/release/subway-backend ./
 
-# Now copy the resources and config
+# Now copy the resources, config, and TLS certificates
 COPY ./backend/resources ./resources
 COPY ./backend/config.toml ./config.toml
+COPY ./backend/certs /app/certs
 
 # Command to run the application
 CMD ["./subway-backend"]
