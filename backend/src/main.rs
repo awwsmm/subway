@@ -49,8 +49,6 @@ async fn main() {
         Err(e) => panic!("unable to read TLS key file: {}", e)
     };
 
-    // let cert = include_bytes!("../certs/cert.pem").to_vec();
-    // let key = include_bytes!("../certs/key.pem").to_vec();
     log::debug!("loaded TLS certificate and key files");
 
     let tls_config = RustlsConfig::new(Keycert::new().cert(cert).key(key));

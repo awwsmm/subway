@@ -47,7 +47,7 @@ pub(crate) async fn many(req: &mut Request, depot: &mut Depot, res: &mut Respons
     let db = state.lock().await;
     let table = &db.posts_by_id;
 
-    let limit = req.query::<u32>("limit").unwrap_or(10);
+    let limit = req.query::<usize>("limit").unwrap_or(10);
 
     match table.list(limit) {
         Err(e) => res.render(format!("error listing Posts: {}", e)),

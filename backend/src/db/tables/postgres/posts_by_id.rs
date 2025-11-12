@@ -18,8 +18,8 @@ table! {
 }
 
 #[derive(Debug)]
-pub(crate) struct Impl {
-    pub(crate) connection_pool: Arc<Pool<ConnectionManager<PgConnection>>>,
+pub(in crate::db) struct Impl {
+    pub(in crate::db) connection_pool: Arc<Pool<ConnectionManager<PgConnection>>>,
 }
 
 // TODO pull this implementation out into a default trait
@@ -57,7 +57,7 @@ impl PostsByIdTableLike for Impl {
         }
     }
 
-    fn list(&self, limit: u32) -> Result<Vec<PostsByIdTableRow>, String> {
+    fn list(&self, limit: usize) -> Result<Vec<PostsByIdTableRow>, String> {
         match self.connection_pool.get() {
             Ok(mut connection) => {
                 match posts_by_id::table.select(PostsByIdTableRow::as_select()).limit(limit as i64).load(&mut connection) {

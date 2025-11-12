@@ -18,6 +18,7 @@ pub(crate) struct Database {
 
 impl Database {
     pub(crate) fn new(mode: &str, url: &str) -> Self {
+        // TODO split this into an in_memory and a postgres implementation
         if mode == "docker" {
             let manager = ConnectionManager::<PgConnection>::new(url);
             let n_connections = 10;

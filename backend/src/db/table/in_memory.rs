@@ -2,13 +2,13 @@ use crate::db::table::{Table, TableRow};
 use std::collections::HashMap;
 use std::hash::Hash;
 
-pub(crate) struct InMemoryTable<PrimaryKey, Row> {
+pub(in crate::db) struct InMemoryTable<PrimaryKey, Row> {
     data: HashMap<PrimaryKey, Row>,
 }
 
-// We add a new() function to avoid making 'data' public
+// We add a new() function to avoid making 'data' visible
 impl<PrimaryKey, Row> InMemoryTable<PrimaryKey, Row> {
-    pub(crate) fn new() -> Self {
+    pub(in crate::db) fn new() -> Self {
         Self { data: HashMap::new() }
     }
 }
@@ -36,7 +36,7 @@ where
         }
     }
 
-    fn list(&self, limit: u32) -> Result<Vec<Row>, String> {
-        Ok(self.data.values().take(limit as usize).cloned().collect())
+    fn list(&self, limit: usize) -> Result<Vec<Row>, String> {
+        Ok(self.data.values().take(limit).cloned().collect())
     }
 }

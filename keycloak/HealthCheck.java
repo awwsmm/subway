@@ -16,6 +16,7 @@ public class HttpsClient {
 
     public static void main(String[] args) {
         String urlString = "https://localhost:9000/health/ready";
+//         String urlString = "https://localhost:9000/realms/myrealm";
 
         // TODO: Trust all certificates (WARNING: DO NOT USE IN PRODUCTION)
         try {
@@ -32,6 +33,7 @@ public class HttpsClient {
             HttpsURLConnection.setDefaultHostnameVerifier((hostname, session) -> true);
         } catch (Exception e) {
             e.printStackTrace();
+            System.exit(1);
         }
 
         try {
@@ -64,6 +66,7 @@ public class HttpsClient {
 
         } catch (Exception e) {
             e.printStackTrace();
+            System.exit(1);
         }
     }
 }
