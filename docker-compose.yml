@@ -78,6 +78,7 @@ services:
       SUBWAY_DB_URL: postgresql://postgres_user:postgres_password@db_container:5432/postgres_db
       SUBWAY_DB_MODE: docker
       SUBWAY_AUTH_MODE: keycloak
+      RUST_LOG: info
     depends_on:
       db_container:
         condition: service_healthy

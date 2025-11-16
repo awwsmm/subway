@@ -33,7 +33,8 @@ fn read_file(path: &str) -> Result<String, Box<dyn std::error::Error>> {
 
 #[tokio::main]
 async fn main() {
-    log::debug!("Starting subway-backend...");
+    env_logger::init();
+    log::info!("Starting subway-backend...");
 
     // TODO (config) move this file path to config
     let cert_file_path = "../certs/cert.pem";
