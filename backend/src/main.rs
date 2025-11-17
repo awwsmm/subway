@@ -4,6 +4,7 @@ mod handlers;
 mod auth_middleware;
 mod config;
 mod auth;
+mod newdb;
 
 use crate::auth::Authenticator;
 use crate::auth_middleware::Auth;
