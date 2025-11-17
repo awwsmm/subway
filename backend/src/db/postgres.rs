@@ -1,4 +1,4 @@
-use crate::newdb::tables::posts_by_id::PostsByIdTableLike;
+use crate::db::tables::posts_by_id::PostsByIdTableLike;
 use diesel::r2d2::{ConnectionManager, Pool};
 use diesel::PgConnection;
 use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};

@@ -1,7 +1,7 @@
 use crate::model::post;
 use crate::model::post::Post;
-use crate::newdb::tables::posts_by_id::PostsByIdTableRow;
-use crate::newdb::Database;
+use crate::db::tables::posts_by_id::PostsByIdTableRow;
+use crate::db::Database;
 use salvo::oapi::{endpoint, ToSchema};
 use salvo::{Depot, Request, Response};
 use serde::Deserialize;

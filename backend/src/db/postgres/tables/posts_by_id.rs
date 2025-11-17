@@ -1,5 +1,5 @@
-use crate::newdb::table::TableRow;
-use crate::newdb::tables::posts_by_id::{PostsByIdTableLike, PostsByIdTableRow};
+use crate::db::table::TableRow;
+use crate::db::tables::posts_by_id::{PostsByIdTableLike, PostsByIdTableRow};
 use diesel::dsl::insert_into;
 use diesel::r2d2::{ConnectionManager, Pool};
 use diesel::{table, Connection, QueryDsl, SelectableHelper};
@@ -18,8 +18,8 @@ table! {
 }
 
 #[derive(Debug)]
-pub(in crate::newdb) struct Impl {
-    pub(in crate::newdb) connection_pool: Arc<Pool<ConnectionManager<PgConnection>>>,
+pub(in crate::db) struct Impl {
+    pub(in crate::db) connection_pool: Arc<Pool<ConnectionManager<PgConnection>>>,
 }
 
 // TODO pull this implementation out into a default trait

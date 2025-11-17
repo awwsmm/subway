@@ -1,15 +1,15 @@
-use crate::newdb::in_memory::table::InMemoryTable;
-use crate::newdb::table::Table;
-use crate::newdb::tables::posts_by_id::{PostsByIdTableLike, PostsByIdTableRow};
+use crate::db::in_memory::table::InMemoryTable;
+use crate::db::table::Table;
+use crate::db::tables::posts_by_id::{PostsByIdTableLike, PostsByIdTableRow};
 use uuid::Uuid;
 
-pub(in crate::newdb) struct Impl {
+pub(in crate::db) struct Impl {
     delegate: InMemoryTable<Uuid, PostsByIdTableRow>,
 }
 
 // We add a new() function to avoid making 'delegate' public
 impl Impl {
-    pub(in crate::newdb) fn new() -> Self {
+    pub(in crate::db) fn new() -> Self {
         Self { delegate: InMemoryTable::new() }
     }
 }

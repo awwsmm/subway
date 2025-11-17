@@ -1,14 +1,14 @@
-use crate::newdb::table::{Table, TableRow};
+use crate::db::table::{Table, TableRow};
 use std::collections::HashMap;
 use std::hash::Hash;
 
-pub(in crate::newdb) struct InMemoryTable<PrimaryKey, Row> {
+pub(in crate::db) struct InMemoryTable<PrimaryKey, Row> {
     data: HashMap<PrimaryKey, Row>,
 }
 
 // We add a new() function to avoid making 'data' visible
 impl<PrimaryKey, Row> InMemoryTable<PrimaryKey, Row> {
-    pub(in crate::newdb) fn new() -> Self {
+    pub(in crate::db) fn new() -> Self {
         Self { data: HashMap::new() }
     }
 }

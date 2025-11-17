@@ -1,5 +1,5 @@
-use crate::newdb::tables::posts_by_id::PostsByIdTableRow;
-use crate::newdb::Database;
+use crate::db::tables::posts_by_id::PostsByIdTableRow;
+use crate::db::Database;
 use salvo::oapi::endpoint;
 use salvo::prelude::Json;
 use salvo::{Depot, Request, Response};

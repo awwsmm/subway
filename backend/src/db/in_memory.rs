@@ -1,4 +1,4 @@
-use crate::newdb::tables::posts_by_id::PostsByIdTableLike;
+use crate::db::tables::posts_by_id::PostsByIdTableLike;
 
 // defines what a 'Table' is
 pub(crate) mod table;

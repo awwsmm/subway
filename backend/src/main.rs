@@ -3,12 +3,12 @@ mod handlers;
 mod auth_middleware;
 mod config;
 mod auth;
-mod newdb;
+mod db;
 
 use crate::auth::Authenticator;
 use crate::auth_middleware::Auth;
 use crate::config::Config;
-use crate::newdb::Database;
+use crate::db::Database;
 use salvo::catcher::Catcher;
 use salvo::conn::rustls::{Keycert, RustlsConfig};
 use salvo::cors::Cors;
@@ -129,8 +129,8 @@ async fn main() {
     */
 
     let db = match config.db.mode.as_str() {
-        "docker" => Database::Postgres(newdb::postgres::Database::new(config.db.url.as_ref())),
-        _ => Database::InMemory(newdb::in_memory::Database::new()),
+        "docker" => Database::Postgres(db::postgres::Database::new(config.db.url.as_ref())),
+        _ => Database::InMemory(db::in_memory::Database::new()),
     };
 
     let public_router = Router::new()

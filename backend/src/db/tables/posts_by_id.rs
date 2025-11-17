@@ -1,6 +1,6 @@
 use crate::model::post::Post;
-use crate::newdb::postgres::tables::posts_by_id::posts_by_id;
-use crate::newdb::table::TableRow;
+use crate::db::postgres::tables::posts_by_id::posts_by_id;
+use crate::db::table::TableRow;
 use diesel::{Insertable, Queryable, Selectable};
 use serde::Serialize;
 use std::fmt::Debug;

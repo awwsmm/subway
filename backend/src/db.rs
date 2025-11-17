@@ -1,4 +1,4 @@
-use crate::newdb::tables::posts_by_id::PostsByIdTableLike;
+use crate::db::tables::posts_by_id::PostsByIdTableLike;
 use std::ops::DerefMut;
 
 pub(crate) mod in_memory;
