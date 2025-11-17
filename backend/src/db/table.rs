@@ -1,12 +1,12 @@
 // It's unlikely that we'll have two tables with the same columns (same row type) but different
 // primary keys. So this can be reimplemented using an associated type, rather than a generic type
 // parameter, if necessary.
-pub(crate) trait TableRow<PrimaryKey> {
+pub(in crate::db) trait TableRow<PrimaryKey> {
     fn primary_key(&self) -> &PrimaryKey;
 }
 
 // Table can be reimplemented with associated types for the same reason.
-pub(crate) trait Table<PrimaryKey, Row> where Row: TableRow<PrimaryKey> {
+pub(in crate::db) trait Table<PrimaryKey, Row> where Row: TableRow<PrimaryKey> {
 
     /// Insert one or more rows into the table.
     fn insert(&mut self, row: Vec<Row>) -> Result<Vec<PrimaryKey>, String>;

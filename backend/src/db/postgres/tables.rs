@@ -1,1 +1,1 @@
-pub(crate) mod posts_by_id;
+pub(in crate::db) mod posts_by_id;

@@ -1,14 +1,14 @@
 use crate::db::tables::posts_by_id::PostsByIdTableLike;
 
 // defines what a 'Table' is
-pub(crate) mod table;
+pub(in crate::db) mod table;
 
 // gives a list of Tables
-pub(crate) mod tables;
+pub(in crate::db) mod tables;
 
 // list the Tables we want to use here
 pub(crate) struct Database {
-    pub(crate) posts_by_id: Box<dyn PostsByIdTableLike>,
+    pub(in crate::db) posts_by_id: Box<dyn PostsByIdTableLike>,
 }
 
 impl Database {

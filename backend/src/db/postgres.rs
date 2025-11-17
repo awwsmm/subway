@@ -5,11 +5,11 @@ use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
 use std::sync::Arc;
 
 // gives a list of Tables
-pub(crate) mod tables;
+pub(in crate::db) mod tables;
 
 // list the Tables we want to use here
 pub(crate) struct Database {
-    pub(crate) posts_by_id: Box<dyn PostsByIdTableLike>,
+    pub(in crate::db) posts_by_id: Box<dyn PostsByIdTableLike>,
 }
 
 impl Database {
