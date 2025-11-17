@@ -1,4 +1,3 @@
-mod db;
 mod model;
 mod handlers;
 mod auth_middleware;
@@ -9,7 +8,7 @@ mod newdb;
 use crate::auth::Authenticator;
 use crate::auth_middleware::Auth;
 use crate::config::Config;
-use crate::db::Database;
+use crate::newdb::Database;
 use salvo::catcher::Catcher;
 use salvo::conn::rustls::{Keycert, RustlsConfig};
 use salvo::cors::Cors;
@@ -18,7 +17,6 @@ use salvo::prelude::*;
 use salvo_extra::affix_state;
 use std::sync::Arc;
 use tokio::sync::Mutex;
-
 // There should be no endpoint definitions here. The purpose of main.rs is just to wire up the
 // endpoint implementations, which themselves live in different files.
 
@@ -37,14 +35,14 @@ async fn main() {
     env_logger::init();
     log::info!("Starting subway-backend...");
 
-    // TODO (config) move this file path to config
+    // TODO (config) move this file path to config (blocks running with 'cargo run')
     let cert_file_path = "../certs/cert.pem";
     let cert = match read_file(cert_file_path) {
         Ok(string) => string,
         Err(e) => panic!("unable to read TLS certificate file: {}", e)
     };
 
-    // TODO (config) move this file path to config
+    // TODO (config) move this file path to config (blocks running with 'cargo run')
     let key_file_path = "../certs/key.pem";
     let key = match read_file(key_file_path) {
         Ok(string) => string,
@@ -130,8 +128,13 @@ async fn main() {
     //   to learn about extracting query parameters
     */
 
+    let db = match config.db.mode.as_str() {
+        "docker" => Database::Postgres(newdb::postgres::Database::new(config.db.url.as_ref())),
+        _ => Database::InMemory(newdb::in_memory::Database::new()),
+    };
+
     let public_router = Router::new()
-        .hoop(affix_state::inject(Arc::new(Mutex::new(Database::new(config.db.mode.as_ref(), config.db.url.as_ref()))))) // add DB to state
+        .hoop(affix_state::inject(Arc::new(Mutex::new(db))))
         .hoop(affix_state::inject(Arc::new(Mutex::new(Authenticator::new(config.auth.mode.as_str()))))) // add auth to state
         // TODO preface all of these with /v0/ before pushing to production for the first time
         .push(Router::with_path("hello").get(handlers::misc::hello::hello))

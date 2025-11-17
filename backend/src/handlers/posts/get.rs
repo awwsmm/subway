@@ -1,5 +1,5 @@
-use crate::db::tables::posts_by_id::PostsByIdTableRow;
-use crate::db::Database;
+use crate::newdb::tables::posts_by_id::PostsByIdTableRow;
+use crate::newdb::Database;
 use salvo::oapi::endpoint;
 use salvo::prelude::Json;
 use salvo::{Depot, Request, Response};
@@ -12,8 +12,8 @@ use uuid::Uuid;
 #[endpoint]
 pub(crate) async fn one(req: &mut Request, depot: &mut Depot, res: &mut Response) {
     let state = depot.obtain::<Arc<Mutex<Database>>>().unwrap();
-    let db = state.lock().await;
-    let table = &db.posts_by_id;
+    let mut db = state.lock().await;
+    let table = &db.posts_by_id();
 
     let id: String = req.param::<String>("id").expect("request did not contain a 'id' param");
 
@@ -44,8 +44,8 @@ pub(crate) async fn one(req: &mut Request, depot: &mut Depot, res: &mut Response
 )]
 pub(crate) async fn many(req: &mut Request, depot: &mut Depot, res: &mut Response) {
     let state = depot.obtain::<Arc<Mutex<Database>>>().unwrap();
-    let db = state.lock().await;
-    let table = &db.posts_by_id;
+    let mut db = state.lock().await;
+    let table = &db.posts_by_id();
 
     let limit = req.query::<usize>("limit").unwrap_or(10);
 

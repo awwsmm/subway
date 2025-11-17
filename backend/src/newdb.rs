@@ -1,9 +1,9 @@
 use crate::newdb::tables::posts_by_id::PostsByIdTableLike;
 use std::ops::DerefMut;
 
-mod in_memory;
-mod postgres;
-mod tables;
+pub(crate) mod in_memory;
+pub(crate) mod postgres;
+pub(crate) mod tables;
 mod table;
 
 /// All implemented Databases are listed here.

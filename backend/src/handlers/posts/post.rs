@@ -1,7 +1,7 @@
-use crate::db::tables::posts_by_id::PostsByIdTableRow;
-use crate::db::Database;
 use crate::model::post;
 use crate::model::post::Post;
+use crate::newdb::tables::posts_by_id::PostsByIdTableRow;
+use crate::newdb::Database;
 use salvo::oapi::{endpoint, ToSchema};
 use salvo::{Depot, Request, Response};
 use serde::Deserialize;
@@ -35,7 +35,7 @@ pub(crate) async fn many(req: &mut Request, depot: &mut Depot, res: &mut Respons
     match req.parse_json::<Vec<ProtoPost>>().await {
         Ok(proto_posts) => {
             let mut db = state.lock().await;
-            let table = &mut db.posts_by_id;
+            let table = &mut db.posts_by_id();
 
             match table.insert(
                 proto_posts.into_iter().map(|proto_post| {
