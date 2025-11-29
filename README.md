@@ -40,6 +40,8 @@ docker build -t subway-backend -f backend/Dockerfile .
 
 You must also create a TLS certificate and key for the backend (which requires HTTPS)
 
+<!-- TODO fix this so we don't need the "-k" flag -->
+
 ```shell
 mkdir -p backend/certs && openssl req -x509 -newkey rsa:4096 -keyout backend/certs/key.pem -out backend/certs/cert.pem -sha256 -days 47 -nodes -subj '/CN=localhost'
 ```

@@ -75,10 +75,14 @@ services:
     ports:
       - "7878:7878" # keep these the same so running in / outside a container uses the same port
     environment:
-      SUBWAY_DB_URL: postgresql://postgres_user:postgres_password@db_container:5432/postgres_db
-      SUBWAY_DB_MODE: docker
-      SUBWAY_AUTH_MODE: keycloak
+      # TODO change to frontend host and port
+      CORS_ALLOWLIST: "http://localhost:5173"
+      SUBWAY_TLS_CERTIFICATE_PATH: "../certs/cert.pem"
+      SUBWAY_TLS_KEY_PATH: "../certs/key.pem"
       RUST_LOG: info
+      SUBWAY_DB_MODE: docker
+      SUBWAY_DB_URL: postgresql://postgres_user:postgres_password@db_container:5432/postgres_db
+      SUBWAY_AUTH_MODE: keycloak
     depends_on:
       db_container:
         condition: service_healthy

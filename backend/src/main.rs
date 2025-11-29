@@ -9,12 +9,15 @@ use crate::auth::Authenticator;
 use crate::auth_middleware::Auth;
 use crate::config::Config;
 use crate::db::Database;
+use env_logger::Builder;
+use log::LevelFilter;
 use salvo::catcher::Catcher;
 use salvo::conn::rustls::{Keycert, RustlsConfig};
 use salvo::cors::Cors;
 use salvo::http::Method;
 use salvo::prelude::*;
 use salvo_extra::affix_state;
+use std::str::FromStr;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 // There should be no endpoint definitions here. The purpose of main.rs is just to wire up the
@@ -32,19 +35,30 @@ fn read_file(path: &str) -> Result<String, Box<dyn std::error::Error>> {
 
 #[tokio::main]
 async fn main() {
-    env_logger::init();
+
+    let config = Config::new("config.toml");
+    println!("loaded config: {:?}", config);
+
+    let mut builder = Builder::from_default_env();
+    let log_level = match LevelFilter::from_str(config.log_level.as_str()) {
+        Ok(level_filter) => level_filter,
+        Err(_) => {
+            println!("Invalid log level \"{}\". Defaulting to \"INFO\".", config.log_level);
+            LevelFilter::Info
+        }
+    };
+
+    builder.filter_level(log_level);
+    builder.init();
+
     log::info!("Starting subway-backend...");
 
-    // TODO (config) move this file path to config (blocks running with 'cargo run')
-    let cert_file_path = "../certs/cert.pem";
-    let cert = match read_file(cert_file_path) {
+    let cert = match read_file(config.tls_certificate_path.as_str()) {
         Ok(string) => string,
         Err(e) => panic!("unable to read TLS certificate file: {}", e)
     };
 
-    // TODO (config) move this file path to config (blocks running with 'cargo run')
-    let key_file_path = "../certs/key.pem";
-    let key = match read_file(key_file_path) {
+    let key = match read_file(config.tls_key_path.as_str()) {
         Ok(string) => string,
         Err(e) => panic!("unable to read TLS key file: {}", e)
     };
@@ -53,9 +67,6 @@ async fn main() {
 
     let tls_config = RustlsConfig::new(Keycert::new().cert(cert).key(key));
     log::debug!("configured TLS");
-
-    let config = Config::new("config.toml");
-    log::info!("loaded config: {:?}", config);
 
     let host_port = format!("{}:{}", config.host, config.port);
     let listener = TcpListener::new(host_port.clone()).rustls(tls_config.clone());
@@ -74,12 +85,9 @@ async fn main() {
     //     Regex::new("[0-9a-fA-F]{8}-([0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}").unwrap(),
     // );
 
-    // TODO (config) pull CORS configuration out into config.toml
-    let origins = ["http://localhost:5173"];
-
     // TODO (best practices) research and implement best practices for CORS here
     let cors = Cors::new()
-        .allow_origin(origins) // Allow specific origins
+        .allow_origin(&config.cors_allowlist) // Allow specific origins
         .allow_methods(vec![Method::GET, Method::POST, Method::PUT, Method::DELETE]) // Allow specific HTTP methods
         // .allow_headers(vec!["Content-Type".into(), "Authorization".into()]) // Allow specific headers
         .allow_credentials(true) // Allow sending of cookies and authentication headers
@@ -156,7 +164,6 @@ async fn main() {
     let catcher = Catcher::default().hoop(handlers::misc::not_found::not_found);
 
     log::debug!("added OpenAPI docs UI to router");
-
     Server::new(acceptor).serve(
         Service::new(
             public_router_with_openapi

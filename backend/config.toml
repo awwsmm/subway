@@ -4,6 +4,23 @@ host = "0.0.0.0"
 # override with env var SUBWAY_PORT
 port = 7878
 
+# URIs allowed to make requests to this server via the browser (e.g. the Subway frontend)
+# override with env var SUBWAY_CORS_ALLOWLIST
+# e.g. SUBWAY_CORS_ALLOWLIST="http://localhost:5173,http://localhost:5174"
+cors_allowlist = ["http://localhost:5173"]
+
+# path to the TLS certificate (public key), used to enable HTTPS
+# override with env var SUBWAY_TLS_CERTIFICATE_PATH
+tls_certificate_path = "certs/cert.pem"
+
+# path to the TLS private key
+# override with env var SUBWAY_TLS_KEY_PATH
+tls_key_path = "certs/key.pem"
+
+# one of: "OFF", "ERROR", "WARN", "INFO", "DEBUG", "TRACE"
+# override with env var RUST_LOG
+log_level = "INFO"
+
 [db] # config related to the database
 
 # accepted values: "docker", "in-memory"
