@@ -26,19 +26,15 @@ Contains [Keycloak](https://www.keycloak.org/) configuration (for user authentic
 
 ### Containerized
 
-To run the full-stack application, you must first build the `frontend`, `backend`, and `keycloak` Docker container images.
+(Note that building the application in this way (with Docker) requires an Internet connection.)
 
-Note that building the application in this way (with Docker) requires an Internet connection.
+To run the full-stack application, you must first build the `frontend`, `backend`, and `keycloak` Docker container images.
 
 ```shell
 docker build -t subway-frontend -f frontend/Dockerfile .
 ```
 
-```shell
-docker build -t subway-backend -f backend/Dockerfile .
-```
-
-You must also create a TLS certificate and key for the backend (which requires HTTPS)
+You must create a TLS certificate and key for the backend (which requires HTTPS)
 
 <!-- TODO fix this so we don't need the "-k" flag -->
 
@@ -46,17 +42,25 @@ You must also create a TLS certificate and key for the backend (which requires H
 mkdir -p backend/certs && openssl req -x509 -newkey rsa:4096 -keyout backend/certs/key.pem -out backend/certs/cert.pem -sha256 -days 47 -nodes -subj '/CN=localhost'
 ```
 
+...and then create the backend image
+
 ```shell
-docker build -t subway-keycloak -f keycloak/Dockerfile .
+docker build -t subway-backend -f backend/Dockerfile .
 ```
 
-You must also create a TLS certificate and key for Keycloak (which requires HTTPS)
+Similarly, you must also create a TLS certificate and key for Keycloak (which requires HTTPS)
 
 ```shell
 mkdir -p keycloak/certs && openssl req -x509 -newkey rsa:4096 -keyout keycloak/certs/key.pem -out keycloak/certs/cert.pem -sha256 -days 47 -nodes -subj '/CN=localhost'
 ```
 
-then, you can run the full stack with `docker-compose`
+...and then create the keycloak image
+
+```shell
+docker build -t subway-keycloak -f keycloak/Dockerfile .
+```
+
+Finally, you can run the full stack with `docker-compose`
 
 ```shell
 docker-compose up
