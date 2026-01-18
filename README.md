@@ -74,6 +74,20 @@ Note that records are persisted on your local disk when the application is shut 
 docker-compose down -v --remove-orphans
 ```
 
+The above two processes have been encoded in scripts for ease of use. Simply run
+
+```shell
+./up
+```
+
+to bring the whole application stack up, and
+
+```shell
+./down
+```
+
+to bring it all down again.
+
 ### Hot Reloading
 
 If Docker is unnecessary for the development work you're doing (if you don't need a persistent database or realistic authentication, etc.), you can develop in _hot reloading_ mode. This is usually the easiest way to develop.

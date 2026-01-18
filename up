@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+
+echo "building frontend container"
+docker build -q -t subway-frontend -f frontend/Dockerfile .
+
+echo "creating certificates for backend"
+mkdir -p backend/certs && openssl req -x509 -newkey rsa:4096 -keyout backend/certs/key.pem -out backend/certs/cert.pem -sha256 -days 47 -nodes -subj '/CN=localhost' > /dev/null 2>&1
+
+echo "building backend container"
+docker build -q -t subway-backend -f backend/Dockerfile .
+
+echo "creating certificates for frontend"
+mkdir -p keycloak/certs && openssl req -x509 -newkey rsa:4096 -keyout keycloak/certs/key.pem -out keycloak/certs/cert.pem -sha256 -days 47 -nodes -subj '/CN=localhost' > /dev/null 2>&1
+
+echo "building keycloak container"
+docker build -q -t subway-keycloak -f keycloak/Dockerfile .
+
+echo "bringing up services"
+docker-compose up --detach --wait
+
+sleep 1
+
+URL="http://localhost:5173"
+
+# Check the operating system and run the appropriate command
+if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+    # For Linux (most distributions use xdg-open)
+    xdg-open "$URL" >/dev/null 2>&1 &
+elif [[ "$OSTYPE" == "darwin"* ]]; then
+    # For macOS
+    open "$URL"
+elif [[ "$OSTYPE" == "cygwin"* || "$OSTYPE" == "msys"* ]]; then
+    # For Windows (Git Bash/Cygwin using "start" command via cmd.exe)
+    cmd.exe /C start "$URL" >/dev/null 2>&1 &
+elif [[ "$OSTYPE" == "win"* ]]; then
+    # For Windows Subsystem for Linux (WSL), typically uses wslview or cmd.exe
+    if command -v wslview &> /dev/null; then
+        wslview "$URL" >/dev/null 2>&1 &
+    else
+        cmd.exe /C start "$URL" >/dev/null 2>&1 &
+    fi
+fi
